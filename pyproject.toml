@@ -52,7 +52,7 @@ dependencies = [
     # Saya = <firework.modular>
     # Credits: Elaina; BlueGlassBlock; ProgramRipper; Tarraint
     # ---
-    
+
     # Avilla = <firework.core>
     # Credits: Elaina; BlueGlassBlock; ProgramRipper; Tarraint
     # Note: ……别担心，Firework 只能是我自己的一厢情愿，它终究无法与 Graia 割舍一分一毫，上面的记录即是见证。
@@ -67,6 +67,11 @@ license = {text = "MIT"}
 
 [tool.pdm]
 distribution = false
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "ruff>=0.7.2",
+]
 
 [tool.ruff]
 line-length = 135
