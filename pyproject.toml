@@ -5,7 +5,10 @@ description = "Default template for PDM package"
 authors = [
     {name = "Elaina", email = "GreyElaina@outlook.com"},
 ]
-dependencies = []
+dependencies = [
+    "elaina-segment>=0.4.0",
+    "tarina>=0.6.3",
+]
 requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "MIT"}
@@ -13,3 +16,9 @@ license = {text = "MIT"}
 
 [tool.pdm]
 distribution = false
+
+[tool.ruff]
+line-length = 135
+
+[tool.ruff.lint]
+extend-select = ["I001"]
