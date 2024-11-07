@@ -71,9 +71,8 @@ readme = "README.md"
 license = {text = "MIT"}
 
 [project.optional-dependencies]
-uvicorn = [
-    "uvicorn>=0.32.0",
-]
+uvicorn = ["uvicorn>=0.32.0"]
+aiohttp = ["aiohttp>=3.10.10"]
 
 [dependency-groups]
 dev = ["ruff>=0.7.2", "pytest>=8.3.3"]
