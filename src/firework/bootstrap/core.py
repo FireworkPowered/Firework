@@ -18,10 +18,6 @@ if TYPE_CHECKING:
     from .service import Service
 
 
-class UnhandledExit(Exception):
-    pass
-
-
 def _cancel_alive_tasks(loop: asyncio.AbstractEventLoop):
     to_cancel = asyncio.tasks.all_tasks(loop)
     if to_cancel:
@@ -35,6 +31,10 @@ def _cancel_alive_tasks(loop: asyncio.AbstractEventLoop):
                 continue
             if task.exception() is not None:
                 logger.opt(exception=task.exception()).error(f"Unhandled exception when shutting down {task}:")
+
+
+class UnhandledExit(Exception):
+    pass
 
 
 class Bootstrap:
