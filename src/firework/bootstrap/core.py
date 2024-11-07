@@ -53,6 +53,12 @@ class Bootstrap:
     def current():
         return BOOTSTRAP_CONTEXT.get()
 
+    def get_service(self, service_or_id: type[Service] | str) -> Service:
+        if isinstance(service_or_id, type):
+            service_or_id = service_or_id.id
+
+        return self.services[service_or_id]
+
     async def service_daemon(self, service: Service, context: ServiceContext):
         try:
             await service.launch(context)
