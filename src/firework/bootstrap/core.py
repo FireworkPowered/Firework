@@ -53,6 +53,10 @@ class Bootstrap:
     def current():
         return BOOTSTRAP_CONTEXT.get()
 
+    @property
+    def running(self):
+        return self.task_group.main is not None and not self.task_group.main.done()
+
     def get_service(self, service_or_id: type[Service] | str) -> Service:
         if isinstance(service_or_id, type):
             service_or_id = service_or_id.id
@@ -65,7 +69,7 @@ class Bootstrap:
 
         return self.contexts[service_or_id]
 
-    async def service_daemon(self, service: Service, context: ServiceContext):
+    async def _service_daemon(self, service: Service, context: ServiceContext):
         try:
             await service.launch(context)
         finally:
@@ -79,7 +83,7 @@ class Bootstrap:
         for layer in resolved:
             _services = {i: bind[i] for i in layer}
             _contexts = {i: ServiceContext(self) for i in layer}
-            _daemons = {i: self.service_daemon(_services[i], _contexts[i]) for i in layer}
+            _daemons = {i: self._service_daemon(_services[i], _contexts[i]) for i in layer}
 
             self.services.update(_services)
             self.contexts.update(_contexts)
@@ -113,7 +117,6 @@ class Bootstrap:
 
                 if rollback:
                     await self.offline(services)
-                    # TODO: update task group
                     self.task_group.drop(previous_tasks)
 
                 return completed_daemon
@@ -169,9 +172,9 @@ class Bootstrap:
         for context in self.contexts.values():
             context.dispatch_online()
 
-    async def launch(self, initial_services: Iterable[Service]):
+    async def launch(self):
         with cvar(BOOTSTRAP_CONTEXT, self):
-            failed_updating = await self.update(initial_services, rollback=True)
+            failed_updating = await self.update(self.services.values(), rollback=True)
 
             try:
                 if failed_updating is None:
@@ -179,7 +182,7 @@ class Bootstrap:
 
                     await self.task_group.wait()
             finally:
-                failed_offline = await self.offline(initial_services)
+                failed_offline = await self.offline(self.services.values())
 
                 if failed_updating or failed_offline:
                     failed = failed_updating or []
@@ -190,7 +193,6 @@ class Bootstrap:
 
     def launch_blocking(
         self,
-        initial_services: Iterable[Service],
         *,
         loop: asyncio.AbstractEventLoop | None = None,
         stop_signal: Iterable[signal.Signals] = (signal.SIGINT,),
@@ -203,7 +205,7 @@ class Bootstrap:
 
         logger.info("Starting launart main task...", style="green bold")
 
-        launch_task = loop.create_task(self.launch(initial_services), name="amnesia-launch")
+        launch_task = loop.create_task(self.launch(), name="amnesia-launch")
         handled_signals: dict[signal.Signals, Any] = {}
         signal_handler = functools.partial(self._on_sys_signal, main_task=launch_task)
         if threading.current_thread() is threading.main_thread():  # pragma: worst case
