@@ -11,7 +11,7 @@ from firework.globals import BOOTSTRAP_CONTEXT
 from firework.util import TaskGroup, any_completed, cvar, unity
 
 from .context import ServiceContext
-from .service import resolve_services_dependency
+from .service import resolve_services_dependency, validate_service_removal
 from .status import Phase, Stage
 
 if TYPE_CHECKING:
@@ -121,7 +121,9 @@ class Bootstrap:
 
         daemon_bind = {service.id: self.daemon_tasks[service.id] for service in services}
 
-        resolved = resolve_services_dependency(services, reverse=True, exclude=self.services.keys() - service_bind.keys())
+        validate_service_removal(self.services.values(), services)
+        resolved = resolve_services_dependency(services, reverse=True)
+
         for layer in resolved:
             _contexts = {i: self.contexts[i] for i in layer}
             daemon_tasks = [daemon_bind[i] for i in layer]

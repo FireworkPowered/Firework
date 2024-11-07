@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, ClassVar, Iterable
 
 from firework.util import RequirementResolveFailed as RequirementResolveFailed
 from firework.util import resolve_requirements as _resolve_requirements
+from firework.util import validate_removal
 
 if TYPE_CHECKING:
     from .context import ServiceContext
@@ -35,3 +36,9 @@ def resolve_services_dependency(services: Iterable[Service], reverse: bool = Fal
         reverse=reverse,
         excluded=set(exclude) if exclude else None,
     )
+
+
+def validate_service_removal(existed: Iterable[Service], remove: Iterable[Service]):
+    graph = {service.id: set(service.dependencies) for service in existed}
+    validate_removal(graph, {service.id for service in remove})
+
