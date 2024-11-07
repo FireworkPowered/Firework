@@ -100,6 +100,7 @@ class Bootstrap:
 
                 if rollback:
                     await self.offline(services)
+                    self.task_group.drop(previous_tasks)
 
                 return unresolved
 
