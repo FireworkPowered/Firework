@@ -74,9 +74,15 @@ class MemcacheService(Service):
         return Memcache(self._cache, self.expire)
 
     async def launch(self, context: ServiceContext) -> None:
+        async with context.prepare():
+            pass
+
         async with context.online():
             while not context.should_exit:
                 while self.expire and self.expire[0][0] <= time():
                     _, key = heappop(self.expire)
                     self._cache.pop(key, None)
                 await asyncio.sleep(self.interval)
+
+        async with context.cleanup():
+            pass
