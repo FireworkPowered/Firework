@@ -68,7 +68,6 @@ class MemcacheService(Service):
         self.interval = interval
         self._cache = cache or {}
         self.expire = expire or []
-        super().__init__()
 
     @property
     def cache(self):

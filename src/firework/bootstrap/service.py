@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import TYPE_CHECKING, ClassVar, Iterable
+from typing import TYPE_CHECKING, Iterable
 
 from firework.util import RequirementResolveFailed as RequirementResolveFailed
 from firework.util import resolve_requirements as _resolve_requirements
@@ -11,9 +10,8 @@ if TYPE_CHECKING:
     from .context import ServiceContext
 
 
-@dataclass
 class Service:
-    id: ClassVar[str]
+    id: str
 
     @property
     def dependencies(self) -> tuple[str, ...]:

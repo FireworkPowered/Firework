@@ -130,7 +130,7 @@ class DispatcherMiddleware:
 
 
 class UvicornASGIService(Service):
-    id = "asgi.service/uvicorn"
+    id = "org.fireworkpowered.bootstrap.asgi"
 
     middleware: DispatcherMiddleware
     host: str
