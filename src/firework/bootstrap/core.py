@@ -59,6 +59,12 @@ class Bootstrap:
 
         return self.services[service_or_id]
 
+    def get_context(self, service_or_id: type[Service] | str) -> ServiceContext:
+        if isinstance(service_or_id, type):
+            service_or_id = service_or_id.id
+
+        return self.contexts[service_or_id]
+
     async def service_daemon(self, service: Service, context: ServiceContext):
         try:
             await service.launch(context)
@@ -81,11 +87,9 @@ class Bootstrap:
             daemon_tasks = {k: asyncio.create_task(v, name=k) for k, v in _daemons.items()}
             self.daemon_tasks.update(daemon_tasks)
 
-            # 先进 waiting.
-
             awaiting_daemon_exit = asyncio.create_task(any_completed(daemon_tasks.values()))
-            awaiting_enter_waiting = unity([i.wait_for(Stage.PREPARE, Phase.WAITING) for i in _contexts.values()])  # awaiting_prepare
-            completed_task, _ = await any_completed([awaiting_daemon_exit, awaiting_enter_waiting])
+            awaiting_dispatch_ready = unity([i.wait_for(Stage.PREPARE, Phase.WAITING) for i in _contexts.values()])  # awaiting_prepare
+            completed_task, _ = await any_completed([awaiting_daemon_exit, awaiting_dispatch_ready])
 
             if completed_task is awaiting_daemon_exit:
                 unresolved = [task for task in daemon_tasks.values() if task.done()]
@@ -97,7 +101,7 @@ class Bootstrap:
 
             # 调度进入 pending.
             for context in _contexts.values():
-                context._forward(Stage.PREPARE, Phase.PENDING)
+                context.dispatch_prepare()
 
             awaiting_prepare = asyncio.create_task(
                 unity([i.wait_for(Stage.PREPARE, Phase.COMPLETED) for i in _contexts.values()]),  # awaiting_prepare
@@ -128,22 +132,22 @@ class Bootstrap:
         daemon_bind = {service.id: self.daemon_tasks[service.id] for service in services}
 
         validate_service_removal(self.services.values(), services)
-        resolved = resolve_services_dependency(services, reverse=True)
+        resolved = resolve_services_dependency(services, reverse=True, exclude=self.services.keys())
 
         for layer in resolved:
             _contexts = {i: self.contexts[i] for i in layer}
             daemon_tasks = [daemon_bind[i] for i in layer]
 
             awaiting_daemon_exit = asyncio.create_task(any_completed(daemon_tasks))
-            awaiting_enter_waiting = unity([i.wait_for(Stage.CLEANUP, Phase.WAITING) for i in _contexts.values()])  # awaiting_prepare
-            completed_task, _ = await any_completed([awaiting_daemon_exit, awaiting_enter_waiting])
+            awaiting_dispatch_ready = unity([i.wait_for(Stage.CLEANUP, Phase.WAITING) for i in _contexts.values()])  # awaiting_prepare
+            completed_task, _ = await any_completed([awaiting_daemon_exit, awaiting_dispatch_ready])
 
             if completed_task is awaiting_daemon_exit:
                 unresolved = [task for task in daemon_tasks if task.done()]
                 return unresolved
 
             for context in _contexts.values():
-                context._forward(Stage.CLEANUP, Phase.PENDING)
+                context.dispatch_cleanup()
 
             awaiting_cleanup = asyncio.create_task(
                 unity([i.wait_for(Stage.CLEANUP, Phase.COMPLETED) for i in _contexts.values()]),  # awaiting_prepare
@@ -163,7 +167,7 @@ class Bootstrap:
 
     def _enter_online_stage(self):
         for context in self.contexts.values():
-            context._forward(Stage.ONLINE, Phase.PENDING)
+            context.dispatch_online()
 
     async def launch(self, initial_services: Iterable[Service]):
         with cvar(BOOTSTRAP_CONTEXT, self):

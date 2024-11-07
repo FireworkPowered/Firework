@@ -70,6 +70,15 @@ class ServiceContext:
         yield
         self._forward(Stage.CLEANUP, Phase.COMPLETED)
 
+    def dispatch_prepare(self):
+        self._forward(Stage.PREPARE, Phase.PENDING)
+
+    def dispatch_online(self):
+        self._forward(Stage.ONLINE, Phase.PENDING)
+
+    def dispatch_cleanup(self):
+        self._forward(Stage.CLEANUP, Phase.PENDING)
+
     def exit(self):
         "Call by the manager"
         self._sigexit.set()
