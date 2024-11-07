@@ -12,6 +12,7 @@ dependencies = [
     # Common
     "loguru>=0.7.2",
     "richuru>=0.1.1",
+    "exceptiongroup>=1.2.2",
     # ---
 
     # Sistana = <firework.command.core>
@@ -64,7 +65,6 @@ dependencies = [
     #       只是我来的太晚了。
     #       对不起。
     # ---
-    "exceptiongroup>=1.2.2"
 ]
 requires-python = ">=3.11"
 readme = "README.md"
