@@ -1,4 +1,11 @@
+from ._async import any_completed as any_completed
+from ._async import cancel_alive_tasks as cancel_alive_tasks
+from ._async import into_tasks as into_tasks
+from ._async import unity as unity
 from ._cvar import cvar as cvar
 from ._dcls import safe_dcls_kw as safe_dcls_kw
 from ._maybe import Maybe as Maybe
 from ._maybe import Some as Some
+from ._resolve import RequirementResolveFailed as RequirementResolveFailed
+from ._resolve import resolve_requirements as resolve_requirements
+from ._task_group import TaskGroup as TaskGroup

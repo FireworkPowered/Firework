@@ -9,6 +9,11 @@ dependencies = [
     # 我只凭我的记忆写下这些。
     # 如果我做错了什么，对不起。
 
+    # Common
+    "loguru>=0.7.2",
+    "richuru>=0.1.1",
+    # ---
+
     # Sistana = <firework.command.core>
     # Credits: Elaina; Tarraint
     "elaina-segment>=0.4.0",
@@ -66,15 +71,13 @@ license = {text = "MIT"}
 
 
 [tool.pdm]
-distribution = false
-
-[tool.pdm.dev-dependencies]
-dev = [
-    "ruff>=0.7.2",
-]
+distribution = true
 
 [tool.ruff]
 line-length = 135
 
 [tool.ruff.lint]
 extend-select = ["I001"]
+
+[dependency-groups]
+dev = ["ruff>=0.7.2", "pytest>=8.3.3"]
