@@ -26,7 +26,7 @@ class TaskGroup:
 
         self.flush()
         return tasks
-    
+
     def drop(self, tasks: Iterable[asyncio.Task]):
         for task in tasks:
             self.tasks.remove(task)

@@ -41,4 +41,3 @@ def resolve_services_dependency(services: Iterable[Service], reverse: bool = Fal
 def validate_service_removal(existed: Iterable[Service], remove: Iterable[Service]):
     graph = {service.id: set(service.dependencies) for service in existed}
     validate_removal(graph, {service.id for service in remove})
-

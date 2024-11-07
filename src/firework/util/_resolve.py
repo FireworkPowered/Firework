@@ -44,9 +44,7 @@ def validate_removal(graph: dict[str, set[str]], nodes_to_remove: Iterable[str])
     for node in nodes_to_remove:
         for dependent in reverse_graph.get(node, set()):
             if dependent not in nodes_to_remove:
-                raise DependencyBrokenError(
-                    f"Cannot remove node '{node}' because node '{dependent}' depends on it."
-                )
+                raise DependencyBrokenError(f"Cannot remove node '{node}' because node '{dependent}' depends on it.")
 
 
 if __name__ == "__main__":
@@ -65,20 +63,20 @@ if __name__ == "__main__":
         print(e)
 
     graph = {
-        'a': {'b', 'c'},
-        'b': {'c'},
-        'c': set(),
-        'd': {'a'},
-        'e': {'d'},
-        'f': {'e'},
-        'g': {'h'},
-        'h': set(),
+        "a": {"b", "c"},
+        "b": {"c"},
+        "c": set(),
+        "d": {"a"},
+        "e": {"d"},
+        "f": {"e"},
+        "g": {"h"},
+        "h": set(),
     }
 
     try:
-        nodes_to_remove = {'a'}
+        nodes_to_remove = {"a"}
     except DependencyBrokenError as e:
         print(f"移除失败: {e}")
 
-    validate_removal(graph, {'a', 'd', 'e', 'f'})
-    validate_removal(graph, {'g', 'h'})
+    validate_removal(graph, {"a", "d", "e", "f"})
+    validate_removal(graph, {"g", "h"})

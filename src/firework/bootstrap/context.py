@@ -10,6 +10,7 @@ from .status import Phase, ServiceStatusValue, Stage
 if TYPE_CHECKING:
     from .core import Bootstrap
 
+
 @dataclass
 class ServiceContext:
     bootstrap: Bootstrap

@@ -127,7 +127,7 @@ class Bootstrap:
         for layer in resolved:
             _contexts = {i: self.contexts[i] for i in layer}
             daemon_tasks = [daemon_bind[i] for i in layer]
-            
+
             awaiting_daemon_exit = asyncio.create_task(any_completed(daemon_tasks))
             awaiting_enter_waiting = unity([i.wait_for(Stage.CLEANUP, Phase.WAITING) for i in _contexts.values()])  # awaiting_prepare
             completed_task, _ = await any_completed([awaiting_daemon_exit, awaiting_enter_waiting])
@@ -160,23 +160,23 @@ class Bootstrap:
             context._forward(Stage.ONLINE, Phase.PENDING)
 
     async def launch(self, initial_services: Iterable[Service]):
-        failed_updating = await self.update(initial_services, rollback=True)
+        with cvar(BOOTSTRAP_CONTEXT, self):
+            failed_updating = await self.update(initial_services, rollback=True)
 
-        try:
-            if failed_updating is None:
-                self._enter_online_stage()
+            try:
+                if failed_updating is None:
+                    self._enter_online_stage()
 
-                await self.task_group.wait()
-        finally:
-            failed_offline = await self.offline(initial_services)
+                    await self.task_group.wait()
+            finally:
+                failed_offline = await self.offline(initial_services)
 
-            if failed_updating or failed_offline:
-                failed = failed_updating or []
-                if failed_offline:
-                    failed.extend(failed_offline)
+                if failed_updating or failed_offline:
+                    failed = failed_updating or []
+                    if failed_offline:
+                        failed.extend(failed_offline)
 
-                raise BaseExceptionGroup("service cleanup failed", [i.exception() or UnhandledExit() for i in failed])
-
+                    raise BaseExceptionGroup("service cleanup failed", [i.exception() or UnhandledExit() for i in failed])
 
     def launch_blocking(
         self,
@@ -193,9 +193,7 @@ class Bootstrap:
 
         logger.info("Starting launart main task...", style="green bold")
 
-        with cvar(BOOTSTRAP_CONTEXT, self):
-            launch_task = loop.create_task(self.launch(initial_services), name="amnesia-launch")
-
+        launch_task = loop.create_task(self.launch(initial_services), name="amnesia-launch")
         handled_signals: dict[signal.Signals, Any] = {}
         signal_handler = functools.partial(self._on_sys_signal, main_task=launch_task)
         if threading.current_thread() is threading.main_thread():  # pragma: worst case
