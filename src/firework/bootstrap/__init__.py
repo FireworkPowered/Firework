@@ -5,3 +5,4 @@ from .service import RequirementResolveFailed as RequirementResolveFailed
 from .service import Service as Service
 from .status import Phase as Phase
 from .status import Stage as Stage
+from .tools import LifespanHelper as LifespanHelper
