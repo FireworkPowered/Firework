@@ -64,6 +64,7 @@ dependencies = [
     #       只是我来的太晚了。
     #       对不起。
     # ---
+    "exceptiongroup>=1.2.2"
 ]
 requires-python = ">=3.11"
 readme = "README.md"
