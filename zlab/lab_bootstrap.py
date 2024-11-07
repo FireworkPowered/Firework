@@ -10,7 +10,7 @@ from firework.bootstrap import Bootstrap, Service, ServiceContext
 def _xx():
     try:
         yield
-    except:
+    except:  # noqa: E722
         import traceback
 
         traceback.print_exc()
@@ -58,18 +58,28 @@ class TestService2(Service):
 
         async with context.online():
             print(self.id, "online")
-            # await asyncio.sleep(3)
+            await asyncio.sleep(3)
+            print("[test sideload] starting")
+            # await context.bootstrap.update([TestService3()])
+            print("[test sideload] update called")
+            srv = context.bootstrap.get_service(TestService3)
+            # context.bootstrap.get_context(TestService3).dispatch_online()
+            print(f"[test sideload] service obtained: {srv}")
+            await context.bootstrap.offline([srv])
+            print("[test sideload] offline called")
 
-            print("--- [test sideload] ---")
+            print("[test sideload] starting second phase")
+
+            print("[test sideload] starting")
             await context.bootstrap.update([TestService3()])
-            print("--- [test sideload] seems prepare working ---")
+            print("[test sideload] update called")
             srv = context.bootstrap.get_service(TestService3)
             context.bootstrap.get_context(TestService3).dispatch_online()
-            print(f"--- [test sideload] {srv} ---")
+            print(f"[test sideload] service obtained: {srv}")
             await context.bootstrap.offline([srv])
-            print("--- [test sideload] offline done ---")
+            print("[test sideload] offline called")
 
-            print("--- [test sideload] ---")
+            print("[test sideload] completed")
 
             print(self.id, "online done")
 
@@ -108,10 +118,4 @@ class TestService3(Service):
 
 bootstrap = Bootstrap()
 
-bootstrap.launch_blocking(
-    [
-        TestService1(),
-        TestService2(),
-        # TestService3(),
-    ]
-)
+bootstrap.launch_blocking()

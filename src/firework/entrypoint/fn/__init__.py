@@ -1,4 +1,5 @@
 from .endpoint import Fn as Fn
+
 # from .endpoint import wrap_endpoint as wrap_endpoint
 from .implement import FnImplementEntity as FnImplementEntity
 from .implement import wrap_entity as wrap_entity

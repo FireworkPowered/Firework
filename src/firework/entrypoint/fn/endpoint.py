@@ -1,18 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Generator, Generic, Protocol, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Callable, Generator, Generic, Protocol, overload
 
-from typing_extensions import Concatenate, Self
-
-from ..globals import COLLECTING_TARGET_RECORD
-from ..typing import CQ, K1, P1, P2, C, CnR, P, R, T
+from ..typing import CQ, P1, P2, C, CnR, P, R, T
 from .implement import FnImplementEntity
-from .record import CollectSignal, FnRecord, FnRecordLabel
+from .record import CollectSignal, FnRecordLabel
 from .selection import Candidates
 
 if TYPE_CHECKING:
-    from ..context import CollectContext
+    pass
 
 CollectEndpointTarget = Generator[CollectSignal, None, T]
 
@@ -55,6 +52,10 @@ class Fn(Generic[P, CQ]):
 
     def select(self: Fn[..., C], expect_complete: bool = True) -> Candidates[C]:
         return Candidates(self, expect_complete)
+
+    def call(self, callee: C) -> C:
+        # TODO
+        ...
 
 
 # @overload

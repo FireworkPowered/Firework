@@ -9,5 +9,4 @@ if TYPE_CHECKING:
 class BaseEntity:
     collect_context: CollectContext | None = None
 
-    def collect(self, collector: CollectContext):
-        ...
+    def collect(self, collector: CollectContext): ...

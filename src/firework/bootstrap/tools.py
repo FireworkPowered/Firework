@@ -13,11 +13,12 @@ class LifespanHelper(Generic[T], Service):
     def __init__(self, id: str, handler: Callable[[], AsyncContextManager[T]]):
         self.id = id
         self.handler = handler
-    
+
     @classmethod
     def create(cls, id: str):
         def decorator(handler: Callable[[], AsyncContextManager[T]]):
             return cls(id, handler)
+
         return decorator
 
     async def launch(self, context: ServiceContext):
@@ -25,9 +26,9 @@ class LifespanHelper(Generic[T], Service):
 
         async with context.prepare():
             self._value = await target.__aenter__()
-        
+
         async with context.online():
             pass
-        
+
         async with context.cleanup():
             await target.__aexit__(None, None, None)
