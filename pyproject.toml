@@ -8,7 +8,7 @@ authors = [
 dependencies = [
     # 我只凭我的记忆写下这些。
     # 如果我做错了什么，对不起。
-
+    
     # Common
     "loguru>=0.7.2",
     "richuru>=0.1.1",
@@ -70,6 +70,14 @@ requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "MIT"}
 
+[project.optional-dependencies]
+uvicorn = [
+    "uvicorn>=0.32.0",
+]
+
+[dependency-groups]
+dev = ["ruff>=0.7.2", "pytest>=8.3.3"]
+
 
 [tool.pdm]
 distribution = true
@@ -79,6 +87,3 @@ line-length = 135
 
 [tool.ruff.lint]
 extend-select = ["I001"]
-
-[dependency-groups]
-dev = ["ruff>=0.7.2", "pytest>=8.3.3"]
