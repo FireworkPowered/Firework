@@ -13,6 +13,7 @@ dependencies = [
     "loguru>=0.7.2",
     "richuru>=0.1.1",
     "exceptiongroup>=1.2.2",
+    "typing-extensions>=4.12.2",
     # ---
 
     # Sistana = <firework.command.core>
@@ -45,6 +46,7 @@ dependencies = [
 
     # Luma = <firework.cli>
     # Credits: Elaina
+    "typer>=0.13.0",
     # ---
 
     # Launart = <firework.bootstrap>
@@ -73,10 +75,10 @@ license = {text = "MIT"}
 [project.optional-dependencies]
 uvicorn = ["uvicorn>=0.32.0"]
 aiohttp = ["aiohttp>=3.10.10"]
+richuru = ["richuru>=0.1.1"]
 
 [dependency-groups]
 dev = ["ruff>=0.7.2", "pytest>=8.3.3"]
-
 
 [tool.pdm]
 distribution = true
