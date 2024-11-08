@@ -199,7 +199,6 @@ class Bootstrap:
         stop_signal: Iterable[signal.Signals] = (signal.SIGINT,),
     ):
         import contextlib
-        import functools
         import threading
 
         loop = asyncio.new_event_loop()
@@ -208,7 +207,10 @@ class Bootstrap:
 
         launch_task = loop.create_task(self.launch(), name="amnesia-launch")
         handled_signals: dict[signal.Signals, Any] = {}
-        signal_handler = functools.partial(self._on_sys_signal, main_task=launch_task)
+
+        def signal_handler(x, y):
+            return self._on_sys_signal(launch_task)
+
         if threading.current_thread() is threading.main_thread():  # pragma: worst case
             try:
                 for sig in stop_signal:
@@ -235,7 +237,7 @@ class Bootstrap:
             asyncio.set_event_loop(None)
             logger.success("asyncio shutdown complete.", style="green bold")
 
-    def _on_sys_signal(self, _, __, main_task: asyncio.Task):
+    def _on_sys_signal(self, launch_task: asyncio.Task):
         for context in self.contexts.values():
             context.exit()
 
@@ -244,8 +246,8 @@ class Bootstrap:
             if self.task_group.main is not None:  # pragma: worst case
                 self.task_group.main.cancel()
 
-        if not main_task.done():
-            main_task.cancel()
+        if not launch_task.done():
+            launch_task.cancel()
             # wakeup loop if it is blocked by select() with long timeout
-            main_task._loop.call_soon_threadsafe(lambda: None)
+            launch_task._loop.call_soon_threadsafe(lambda: None)
             logger.warning("Ctrl-C triggered by user.", style="dark_orange bold")
