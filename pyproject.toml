@@ -89,7 +89,7 @@ firework = "firework.cli.core:main"
 self = "firework.cli.commands.self:plugin"
 
 [dependency-groups]
-dev = ["ruff>=0.7.2", "pytest>=8.3.3", "prompt-toolkit>=3.0.48", "noneprompt>=0.1.9", "typer>=0.13.0"]
+dev = ["ruff>=0.7.2", "pytest>=8.3.3", "noneprompt>=0.1.9", "typer>=0.13.0"]
 
 [tool.pdm]
 distribution = true

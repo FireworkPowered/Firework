@@ -5,7 +5,7 @@
 groups = ["default", "aiohttp", "dev", "richuru", "uvicorn"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:944d091eadc064ab8d8b667c798f75648e7a6e122cac72092d44262cd0c77760"
+content_hash = "sha256:faeb2b7a9963f6208f605e5b166cd728e7bcf33d3395ea6ca51f774df2e7bbef"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
