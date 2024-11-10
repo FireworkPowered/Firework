@@ -1,0 +1,14 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "pdm",
+			"task": "",
+			"problemMatcher": [
+				"$python"
+			],
+			"label": "pdm: regenerate-cli-schema",
+			"detail": "firework.cli.config.regenerate_cli_schema:main"
+		}
+	]
+}
