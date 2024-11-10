@@ -14,10 +14,15 @@ def main(lab: Annotated[str | None, typer.Argument()] = None):
 
     if lab is None:
         available_labs = [f.stem[4:] for f in lab_folder.glob("lab_*.py")]
-        result = noneprompt.ListPrompt[str](
-            "Choose a lab to run",
-            choices=[noneprompt.Choice(i, i) for i in available_labs],
-        ).prompt()
+
+        try:
+            result = noneprompt.ListPrompt[str](
+                "Choose a lab to run",
+                choices=[noneprompt.Choice(i, i) for i in available_labs],
+            ).prompt()
+        except noneprompt.CancelledError:
+            typer.echo("Cancelled lab execution by user")
+            return typer.Exit(1)
 
         lab = result.data
 
