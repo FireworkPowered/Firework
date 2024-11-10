@@ -21,7 +21,7 @@ verbose_option = Option(
 project_root_option = Option(
     "-p",
     "--path",
-    help="Specify bot directory (env var: LUMA_PROJECT_ROOT / PROJECT_ROOT)",
+    help="Specify bot directory (env var: FIREWORK_PROJECT_ROOT / PROJECT_ROOT)",
 )
 
 python_option = Option("--python-path", help="Specify Python path")

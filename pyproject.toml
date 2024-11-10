@@ -46,6 +46,10 @@ dependencies = [
 
     # Luma = <firework.cli>
     # Credits: BlueGlassBlock, Elaina
+    "importlib-metadata>=8.5.0",
+    "tomlkit>=0.13.2",
+    "jsonschema>=4.23.0",
+    "dacite>=1.8.1"
     # ---
 
     # Launart = <firework.bootstrap>
@@ -66,10 +70,6 @@ dependencies = [
     #       只是我来的太晚了。
     #       对不起。
     # ---
-    "importlib-metadata>=8.5.0",
-    "tomlkit>=0.13.2",
-    "jsonschema>=4.23.0",
-    "dacite>=1.8.1"
 ]
 requires-python = ">=3.11"
 readme = "README.md"
@@ -79,6 +79,9 @@ license = {text = "MIT"}
 uvicorn = ["uvicorn>=0.32.0"]
 aiohttp = ["aiohttp>=3.10.10"]
 richuru = ["richuru>=0.1.1"]
+
+[project.scripts]
+firework = "firework.cli.core:main"
 
 [dependency-groups]
 dev = ["ruff>=0.7.2", "pytest>=8.3.3"]

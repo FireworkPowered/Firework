@@ -33,7 +33,7 @@ from .util import load_from_string
 class Core:
     def __init__(self) -> None:
         self.parser: ErrorArgumentParser = ErrorArgumentParser(
-            "luma",
+            "firework",
             description=term.style(__doc__, style="primary"),  # type: ignore
             formatter_class=LumaFormatter,
         )
@@ -41,7 +41,7 @@ class Core:
         self.ui: term.UI = term.UI()
         self.config: LumaConfig | None = None
         self.python = sys.executable
-        self.version: str = pkg_meta.version("luma") or "development"
+        self.version: str = pkg_meta.version("firework-spark") or "development"
         self.hooks: HookManager = HookManager(self.ui)
         self.component_handlers: dict[str, Callable[[Self, dict[str, Any]], None]] = {}
         self.called_components: set[str] = set()
@@ -122,8 +122,8 @@ class Core:
                             "import site",
                             "import sys",
                             f"site.addsitepackages(set(sys.path), [{json.dumps(sys.prefix)}])",
-                            "import .core",
-                            ".core.main()",
+                            "from firework.cli import main",
+                            "main()",
                         ]
                     ),
                 ]
@@ -174,7 +174,7 @@ class Core:
             self.parser.print_help(sys.stderr)
             sys.exit(1)
 
-        self.project_root = Path(options.path or os.getenv("LUMA_PROJECT_ROOT") or os.getenv("PROJECT_ROOT") or os.getcwd())
+        self.project_root = Path(options.path or os.getenv("FIREWORK_PROJECT_ROOT") or os.getenv("PROJECT_ROOT") or os.getcwd())
 
         try:
             self._reforge_interpreter_env(options.python_path)
