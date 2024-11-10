@@ -8,7 +8,7 @@ from contextlib import contextmanager, suppress
 from typing import Any
 
 from ..base import Command
-from ..commands.utils import require_content
+from ..commands.utils import ensure_config
 from ..config import LumaConfig, SingleModule
 from ..core import Core
 from ..exceptions import LumaConfigError
@@ -32,7 +32,7 @@ class RunCommand(Command):
     name = "run"
     description = "Run your bot."
 
-    @require_content
+    @ensure_config
     def handle(self, core: Core, config: LumaConfig, options: argparse.Namespace) -> None:
         require_modules = []
         for mod in config.modules:

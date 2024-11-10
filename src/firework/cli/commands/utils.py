@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 _T = TypeVar("_T")
 
 
-def require_content(meth: Callable[[_T, Core, LumaConfig, Any], Any]) -> Callable[[_T, Core, Any], Any]:
+def ensure_config(meth: Callable[[_T, Core, LumaConfig, Any], Any]) -> Callable[[_T, Core, Any], Any]:
     @functools.wraps(meth)
     def wrapper(self: _T, core: Core, namespace: Any) -> Any:
         if core.config is None:
