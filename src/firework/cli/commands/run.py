@@ -7,7 +7,7 @@ import pkgutil
 from contextlib import contextmanager, suppress
 from typing import Any
 
-from ..bootstrap.command import Command
+from ..base import Command
 from ..commands.utils import require_content
 from ..config import LumaConfig, SingleModule
 from ..core import Core
@@ -60,6 +60,7 @@ class RunCommand(Command):
         if not run_hook_target:
             msg = "Running target not configured!"
             raise LumaConfigError(msg)
+
         if len(run_hook_target.core) != 1:
             msg = f"Found {len(run_hook_target.core)} running target(s) instead of 1!"
             raise LumaConfigError(msg)

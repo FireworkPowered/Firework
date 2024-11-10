@@ -21,8 +21,7 @@ from rich.traceback import Traceback
 from typing_extensions import Self
 
 from . import term
-from .bootstrap.command import Command, project_root_option, python_option, verbose_option
-from .bootstrap.utils import ErrorArgumentParser, LumaFormatter
+from .base import Command, ErrorArgumentParser, LumaFormatter, project_root_option, python_option, verbose_option
 from .config import Component, LumaConfig, into_config
 from .exceptions import LumaArgumentError, LumaConfigError, LumaError
 from .hook import HookManager

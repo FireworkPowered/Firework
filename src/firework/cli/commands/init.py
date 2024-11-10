@@ -1,7 +1,7 @@
 import argparse
 from pathlib import Path
 
-from ..bootstrap.command import Command
+from ..base import Command
 from ..core import Core
 from ..exceptions import LumaUsageError
 

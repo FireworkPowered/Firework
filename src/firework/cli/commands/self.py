@@ -1,6 +1,6 @@
 import argparse
 
-from ..bootstrap.command import Command
+from ..base import Command
 from ..core import Core
 
 
