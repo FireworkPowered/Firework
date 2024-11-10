@@ -16,7 +16,7 @@ def ensure_config(meth: Callable[[_T, Core, LumaConfig, Any], Any]) -> Callable[
     @functools.wraps(meth)
     def wrapper(self: _T, core: Core, namespace: Any) -> Any:
         if core.config is None:
-            raise LumaConfigError("This command requires valid `luma.toml`")
+            raise LumaConfigError("This command requires valid `firework.toml` in project root")
         return meth(self, core, core.config, namespace)
 
     return wrapper
