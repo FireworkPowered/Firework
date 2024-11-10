@@ -1,20 +1,23 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
-    "title": "luma.content.LumaConfig",
+    "title": "firework.cli.config.LumaConfig",
     "properties": {
+        "metadata": {
+            "$ref": "#/$defs/firework.cli.config.Metadata"
+        },
         "config": {
-            "$ref": "#/$defs/luma.content.Config"
+            "$ref": "#/$defs/firework.cli.config.Config"
         },
         "modules": {
             "type": "array",
             "items": {
                 "anyOf": [
                     {
-                        "$ref": "#/$defs/luma.content.SingleModule"
+                        "$ref": "#/$defs/firework.cli.config.SingleModule"
                     },
                     {
-                        "$ref": "#/$defs/luma.content.MultiModule"
+                        "$ref": "#/$defs/firework.cli.config.MultiModule"
                     }
                 ]
             }
@@ -28,26 +31,33 @@
         "components": {
             "type": "array",
             "items": {
-                "$ref": "#/$defs/luma.content.Component"
+                "$ref": "#/$defs/firework.cli.config.Component"
             }
         },
         "hooks": {
             "type": "array",
             "items": {
-                "$ref": "#/$defs/luma.content.Hook"
+                "$ref": "#/$defs/firework.cli.config.Hook"
             }
-        },
-        "metadata": {
-            "$ref": "#/$defs/luma.content.Metadata"
-        },
-        "$schema": {
-            "type": "string"
         }
     },
+    "required": [
+        "metadata"
+    ],
     "$defs": {
-        "luma.content.Config": {
+        "firework.cli.config.Metadata": {
             "type": "object",
-            "title": "luma.content.Config",
+            "title": "firework.cli.config.Metadata",
+            "properties": {
+                "version": {
+                    "type": "string",
+                    "default": "0.1"
+                }
+            }
+        },
+        "firework.cli.config.Config": {
+            "type": "object",
+            "title": "firework.cli.config.Config",
             "properties": {
                 "endpoints": {
                     "type": "object",
@@ -59,12 +69,11 @@
                     "type": "object",
                     "additionalProperties": {}
                 }
-            },
-            "additionalProperties": false
+            }
         },
-        "luma.content.SingleModule": {
+        "firework.cli.config.SingleModule": {
             "type": "object",
-            "title": "luma.content.SingleModule",
+            "title": "firework.cli.config.SingleModule",
             "properties": {
                 "endpoint": {
                     "type": "string"
@@ -78,12 +87,11 @@
             },
             "required": [
                 "endpoint"
-            ],
-            "additionalProperties": false
+            ]
         },
-        "luma.content.MultiModule": {
+        "firework.cli.config.MultiModule": {
             "type": "object",
-            "title": "luma.content.MultiModule",
+            "title": "firework.cli.config.MultiModule",
             "properties": {
                 "endpoint": {
                     "type": "string"
@@ -103,12 +111,11 @@
             "required": [
                 "endpoint",
                 "type"
-            ],
-            "additionalProperties": false
+            ]
         },
-        "luma.content.Component": {
+        "firework.cli.config.Component": {
             "type": "object",
-            "title": "luma.content.Component",
+            "title": "firework.cli.config.Component",
             "properties": {
                 "endpoint": {
                     "type": "string"
@@ -120,12 +127,11 @@
             },
             "required": [
                 "endpoint"
-            ],
-            "additionalProperties": false
+            ]
         },
-        "luma.content.Hook": {
+        "firework.cli.config.Hook": {
             "type": "object",
-            "title": "luma.content.Hook",
+            "title": "firework.cli.config.Hook",
             "properties": {
                 "endpoint": {
                     "type": "string"
@@ -137,19 +143,7 @@
             "required": [
                 "endpoint",
                 "target"
-            ],
-            "additionalProperties": false
-        },
-        "luma.content.Metadata": {
-            "type": "object",
-            "title": "luma.content.Metadata",
-            "properties": {
-                "version": {
-                    "type": "string",
-                    "default": "0.1"
-                }
-            },
-            "additionalProperties": false
+            ]
         }
     }
 }

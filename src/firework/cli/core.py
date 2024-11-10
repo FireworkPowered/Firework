@@ -24,7 +24,7 @@ from typing_extensions import Self
 from . import term
 from .bootstrap.command import Command, project_root_option, python_option, verbose_option
 from .bootstrap.utils import ErrorArgumentParser, LumaFormatter
-from .config import Component, LumaConfig, load_content
+from .config import Component, LumaConfig, into_config
 from .exceptions import LumaArgumentError, LumaConfigError, LumaError
 from .hook import HookManager
 from .util import load_from_string
@@ -80,7 +80,7 @@ class Core:
 
         if config_file.exists():
             try:
-                self.config = load_content(config_file)
+                self.config = into_config(config_file)
                 if (metadata_v := self.config.metadata.version) != "0.1":
                     self.ui.echo(f"[error]Incompatible [req].toml[/req] version: {metadata_v}")
                     self.config = None

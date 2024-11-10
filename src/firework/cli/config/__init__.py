@@ -1,10 +1,11 @@
-import importlib.resources
 import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Union
 
 from jsonschema import Draft202012Validator
+
+from firework.util.importlib import pkg_resources
 
 from ..util import cp_field
 
@@ -55,10 +56,10 @@ class LumaConfig:
     hooks: List[Hook] = cp_field([])
 
 
-content_validator = Draft202012Validator(json.loads(importlib.resources.read_text(__name__, "schema.json", "utf-8")))
+content_validator = Draft202012Validator(json.loads(pkg_resources.read_text(__name__, "schema.json", "utf-8")))
 
 
-def load_content(config_file: Path) -> LumaConfig:
+def into_config(config_file: Path) -> LumaConfig:
     import tomlkit
     from dacite.config import Config
     from dacite.core import from_dict
