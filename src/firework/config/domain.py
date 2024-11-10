@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Type
 
 from .format import format_with_model
-from .json5_backend import dumps, loads
-from .json5_backend.types import JObject
+from .jsonc_backend import dumps, loads
+from .jsonc_backend.types import JObject
 from .pretty import Prettifier
 from .schema_gen import ConfigModel, SchemaGenerator, write_schema_ref
 from .spec import FormattedPath, parse_path, parse_source

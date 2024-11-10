@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Callable, Tuple, Type, TypeVar, Union, cast
 from loguru import logger
 from typing_extensions import dataclass_transform
 
-from .json5_backend import dumps, loads
-from .json5_backend.types import JObject
+from .jsonc_backend import dumps, loads
+from .jsonc_backend.types import JObject
 from .schema_gen import ConfigModel
 from .utils import from_dict, update
 
