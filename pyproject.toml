@@ -17,13 +17,13 @@ dependencies = [
     "importlib-resources>=6.4.5;python_version>='3.10' and python_version<='3.11'",
     # ---
 
-    # Sistana = <firework.command.core>
+    # Sistana = <firework.framework.command.core>
     # Credits: Elaina; Tarraint
     "elaina-segment>=0.4.0",
     "tarina>=0.6.3",
     # ---
 
-    # Yanagi = <firework.command>
+    # Yanagi = <firework.framework.command>
     # Credits: Elaina
     # ---
 
@@ -31,7 +31,7 @@ dependencies = [
     # Credits: Elaina
     # ---
 
-    # Flywheel SansIO = <firework.backend>
+    # Flywheel SansIO = <firework.framework.backend>
     # Credits: Elaina
     "awaitlet>=0.0.1",
     # ---
@@ -58,15 +58,15 @@ dependencies = [
     # Credits: Elaina; BlueGlassBlock; ProgramRipper; Tarraint
     # ---
 
-    # Amnesia = <firework.core>, <firework.bootstrap.external>
+    # Amnesia = <firework.framework.core>, <firework.bootstrap.external>
     # Credits: Elaina; BlueGlassBlock; ProgramRipper; Tarraint
     # ---
 
-    # Saya = <firework.modular>
+    # Saya = <firework.framework.modular>
     # Credits: Elaina; BlueGlassBlock; ProgramRipper; Tarraint
     # ---
 
-    # Avilla = <firework.core>
+    # Avilla = <firework.framework.core>
     # Credits: Elaina; BlueGlassBlock; ProgramRipper; Tarraint
     # Note: ……别担心，Firework 只能是我自己的一厢情愿，它终究无法与 Graia 割舍一分一毫，上面的记录即是见证。
     #       只是我来的太晚了。
