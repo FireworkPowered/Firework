@@ -94,6 +94,9 @@ dev = ["ruff>=0.7.2", "pytest>=8.3.3", "noneprompt>=0.1.9", "typer>=0.13.0"]
 [tool.pdm]
 distribution = true
 
+[tool.pdm.build]
+includes = ["src/firework"]
+
 [tool.pdm.scripts]
 regenerate-cli-schema = {call = "firework_devel.regenerate_cli_schema:main"}
 lab = {call = "firework_devel.lab:via_typer"}
