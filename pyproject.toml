@@ -95,7 +95,8 @@ dev = ["ruff>=0.7.2", "pytest>=8.3.3"]
 distribution = true
 
 [tool.pdm.scripts]
-regenerate-cli-schema = {call = "firework.cli.config.regenerate_cli_schema:main"}
+regenerate-cli-schema = {call = "firework_devel.regenerate_cli_schema:main"}
+lab = {call = "firework_devel.lab:via_typer"}
 
 [tool.ruff]
 line-length = 135
