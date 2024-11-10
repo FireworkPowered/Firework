@@ -83,6 +83,9 @@ richuru = ["richuru>=0.1.1"]
 [project.scripts]
 firework = "firework.cli.core:main"
 
+[project.entry-points."firework.cli.plugin"]
+self = "firework.cli.commands.self:plugin"
+
 [dependency-groups]
 dev = ["ruff>=0.7.2", "pytest>=8.3.3"]
 

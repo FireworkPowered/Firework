@@ -52,8 +52,7 @@ class LumaFormatter(argparse.RawDescriptionHelpFormatter):
 
         # no help; start on same line and add a final newline
         if not action.help:
-            action_header = f"{' ':{self._current_indent}}{action_header}\n"
-            parts = [term.style(action_header, style="primary")]
+            return self._join_parts([self._format_action(subaction) for subaction in action._get_subactions()])  # type: ignore
         else:
             # short action name; start on the same line and pad two spaces
             if len(action_header) <= action_width:

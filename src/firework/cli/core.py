@@ -54,7 +54,7 @@ class Core:
             "--version",
             action="version",
             version="{}, version {}".format(
-                term.style("Luma", style="bold"),
+                term.style("Firework Spark (Luma)", style="bold"),
                 term.style(self.version, style="success"),
             ),
             help="show the version and exit",
@@ -65,7 +65,7 @@ class Core:
         self.parser._positionals.title = "Commands"
 
     def _load_plugins(self):
-        for plugin in pkg_meta.entry_points(group=".plugin"):
+        for plugin in pkg_meta.entry_points(group="firework.cli.plugin"):
             try:
                 plugin.load()(self)
             except Exception as e:
@@ -89,7 +89,7 @@ class Core:
                 self.ui.echo(f"[req].toml[/req] is invalid TOML file: {e!r}", err=True)
             except ValueError as e:  # JSON Schema error
                 self.ui.echo("[req].toml[/req] is not valid", err=True)
-                if self.ui.verbosity and ".toml" in str(e):
+                if self.ui.verbosity and "firework.toml" in str(e):
                     for exc in e.args[1]:
                         self.ui.echo(f"[error]{exc!r}", err=True)
             except Exception as e:
@@ -133,7 +133,7 @@ class Core:
             sys.exit(venv_luma.returncode)
 
     def _load_components(self) -> None:
-        for ep in pkg_meta.entry_points(group=".component"):
+        for ep in pkg_meta.entry_points(group="firework.cli.components"):
             # NOTE: Here we assume EVERY component is CORRECTLY implemented.
             ep.load()(self)
 
