@@ -5,7 +5,7 @@
 groups = ["default", "aiohttp", "dev", "richuru", "uvicorn"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:3f23bf0050fa297a6ed19f4d696b74c0d1e350afd831cda8a0d4a53a7213fc26"
+content_hash = "sha256:224f06f87e5e934534bd279365cf6c696591f53217c957eeab6f2de1f4f760b6"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -104,7 +104,7 @@ name = "attrs"
 version = "24.2.0"
 requires_python = ">=3.7"
 summary = "Classes Without Boilerplate"
-groups = ["aiohttp"]
+groups = ["default", "aiohttp"]
 dependencies = [
     "importlib-metadata; python_version < \"3.8\"",
 ]
@@ -181,7 +181,7 @@ name = "click"
 version = "8.1.7"
 requires_python = ">=3.7"
 summary = "Composable command line interface toolkit"
-groups = ["default", "uvicorn"]
+groups = ["uvicorn"]
 dependencies = [
     "colorama; platform_system == \"Windows\"",
     "importlib-metadata; python_version < \"3.8\"",
@@ -232,6 +232,19 @@ files = [
     {file = "cryptography-43.0.3-cp39-abi3-win32.whl", hash = "sha256:d56e96520b1020449bbace2b78b603442e7e378a9b3bd68de65c782db1507995"},
     {file = "cryptography-43.0.3-cp39-abi3-win_amd64.whl", hash = "sha256:0c580952eef9bf68c4747774cde7ec1d85a6e61de97281f2dba83c7d2c806362"},
     {file = "cryptography-43.0.3.tar.gz", hash = "sha256:315b9001266a492a6ff443b61238f956b214dbec9910a081ba5b6646a055a805"},
+]
+
+[[package]]
+name = "dacite"
+version = "1.8.1"
+requires_python = ">=3.6"
+summary = "Simple creation of data classes from dictionaries."
+groups = ["default"]
+dependencies = [
+    "dataclasses; python_version < \"3.7\"",
+]
+files = [
+    {file = "dacite-1.8.1-py3-none-any.whl", hash = "sha256:cc31ad6fdea1f49962ea42db9421772afe01ac5442380d9a99fcf3d188c61afe"},
 ]
 
 [[package]]
@@ -404,6 +417,21 @@ files = [
 ]
 
 [[package]]
+name = "importlib-metadata"
+version = "8.5.0"
+requires_python = ">=3.8"
+summary = "Read metadata from Python packages"
+groups = ["default"]
+dependencies = [
+    "typing-extensions>=3.6.4; python_version < \"3.8\"",
+    "zipp>=3.20",
+]
+files = [
+    {file = "importlib_metadata-8.5.0-py3-none-any.whl", hash = "sha256:45e54197d28b7a7f1559e60b95e7c567032b602131fbd588f1497f47880aa68b"},
+    {file = "importlib_metadata-8.5.0.tar.gz", hash = "sha256:71522656f0abace1d072b9e5481a48f07c138e00f079c38c8f883823f9c26bd7"},
+]
+
+[[package]]
 name = "iniconfig"
 version = "2.0.0"
 requires_python = ">=3.7"
@@ -412,6 +440,39 @@ groups = ["dev"]
 files = [
     {file = "iniconfig-2.0.0-py3-none-any.whl", hash = "sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374"},
     {file = "iniconfig-2.0.0.tar.gz", hash = "sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3"},
+]
+
+[[package]]
+name = "jsonschema"
+version = "4.23.0"
+requires_python = ">=3.8"
+summary = "An implementation of JSON Schema validation for Python"
+groups = ["default"]
+dependencies = [
+    "attrs>=22.2.0",
+    "importlib-resources>=1.4.0; python_version < \"3.9\"",
+    "jsonschema-specifications>=2023.03.6",
+    "pkgutil-resolve-name>=1.3.10; python_version < \"3.9\"",
+    "referencing>=0.28.4",
+    "rpds-py>=0.7.1",
+]
+files = [
+    {file = "jsonschema-4.23.0-py3-none-any.whl", hash = "sha256:fbadb6f8b144a8f8cf9f0b89ba94501d143e50411a1278633f56a7acf7fd5566"},
+    {file = "jsonschema-4.23.0.tar.gz", hash = "sha256:d71497fef26351a33265337fa77ffeb82423f3ea21283cd9467bb03999266bc4"},
+]
+
+[[package]]
+name = "jsonschema-specifications"
+version = "2024.10.1"
+requires_python = ">=3.9"
+summary = "The JSON Schema meta-schemas and vocabularies, exposed as a Registry"
+groups = ["default"]
+dependencies = [
+    "referencing>=0.31.0",
+]
+files = [
+    {file = "jsonschema_specifications-2024.10.1-py3-none-any.whl", hash = "sha256:a09a0680616357d9a0ecf05c12ad234479f549239d0f5b55f3deea67475da9bf"},
+    {file = "jsonschema_specifications-2024.10.1.tar.gz", hash = "sha256:0f38b83639958ce1152d02a7f062902c41c8fd20d558b0c34344292d417ae272"},
 ]
 
 [[package]]
@@ -668,6 +729,21 @@ files = [
 ]
 
 [[package]]
+name = "referencing"
+version = "0.35.1"
+requires_python = ">=3.8"
+summary = "JSON Referencing + Python"
+groups = ["default"]
+dependencies = [
+    "attrs>=22.2.0",
+    "rpds-py>=0.7.0",
+]
+files = [
+    {file = "referencing-0.35.1-py3-none-any.whl", hash = "sha256:eda6d3234d62814d1c64e305c1331c9a3a6132da475ab6382eaa997b21ee75de"},
+    {file = "referencing-0.35.1.tar.gz", hash = "sha256:25b42124a6c8b632a425174f24087783efb348a6f1e0008e63cd4466fedf703c"},
+]
+
+[[package]]
 name = "rich"
 version = "13.9.4"
 requires_python = ">=3.8.0"
@@ -699,6 +775,55 @@ files = [
 ]
 
 [[package]]
+name = "rpds-py"
+version = "0.21.0"
+requires_python = ">=3.9"
+summary = "Python bindings to Rust's persistent data structures (rpds)"
+groups = ["default"]
+files = [
+    {file = "rpds_py-0.21.0-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:5555db3e618a77034954b9dc547eae94166391a98eb867905ec8fcbce1308d95"},
+    {file = "rpds_py-0.21.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:97ef67d9bbc3e15584c2f3c74bcf064af36336c10d2e21a2131e123ce0f924c9"},
+    {file = "rpds_py-0.21.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:4ab2c2a26d2f69cdf833174f4d9d86118edc781ad9a8fa13970b527bf8236027"},
+    {file = "rpds_py-0.21.0-cp311-cp311-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:4e8921a259f54bfbc755c5bbd60c82bb2339ae0324163f32868f63f0ebb873d9"},
+    {file = "rpds_py-0.21.0-cp311-cp311-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:8a7ff941004d74d55a47f916afc38494bd1cfd4b53c482b77c03147c91ac0ac3"},
+    {file = "rpds_py-0.21.0-cp311-cp311-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:5145282a7cd2ac16ea0dc46b82167754d5e103a05614b724457cffe614f25bd8"},
+    {file = "rpds_py-0.21.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:de609a6f1b682f70bb7163da745ee815d8f230d97276db049ab447767466a09d"},
+    {file = "rpds_py-0.21.0-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:40c91c6e34cf016fa8e6b59d75e3dbe354830777fcfd74c58b279dceb7975b75"},
+    {file = "rpds_py-0.21.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:d2132377f9deef0c4db89e65e8bb28644ff75a18df5293e132a8d67748397b9f"},
+    {file = "rpds_py-0.21.0-cp311-cp311-musllinux_1_2_i686.whl", hash = "sha256:0a9e0759e7be10109645a9fddaaad0619d58c9bf30a3f248a2ea57a7c417173a"},
+    {file = "rpds_py-0.21.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:9e20da3957bdf7824afdd4b6eeb29510e83e026473e04952dca565170cd1ecc8"},
+    {file = "rpds_py-0.21.0-cp311-none-win32.whl", hash = "sha256:f71009b0d5e94c0e86533c0b27ed7cacc1239cb51c178fd239c3cfefefb0400a"},
+    {file = "rpds_py-0.21.0-cp311-none-win_amd64.whl", hash = "sha256:e168afe6bf6ab7ab46c8c375606298784ecbe3ba31c0980b7dcbb9631dcba97e"},
+    {file = "rpds_py-0.21.0-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:30b912c965b2aa76ba5168fd610087bad7fcde47f0a8367ee8f1876086ee6d1d"},
+    {file = "rpds_py-0.21.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:ca9989d5d9b1b300bc18e1801c67b9f6d2c66b8fd9621b36072ed1df2c977f72"},
+    {file = "rpds_py-0.21.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6f54e7106f0001244a5f4cf810ba8d3f9c542e2730821b16e969d6887b664266"},
+    {file = "rpds_py-0.21.0-cp312-cp312-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:fed5dfefdf384d6fe975cc026886aece4f292feaf69d0eeb716cfd3c5a4dd8be"},
+    {file = "rpds_py-0.21.0-cp312-cp312-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:590ef88db231c9c1eece44dcfefd7515d8bf0d986d64d0caf06a81998a9e8cab"},
+    {file = "rpds_py-0.21.0-cp312-cp312-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:f983e4c2f603c95dde63df633eec42955508eefd8d0f0e6d236d31a044c882d7"},
+    {file = "rpds_py-0.21.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b229ce052ddf1a01c67d68166c19cb004fb3612424921b81c46e7ea7ccf7c3bf"},
+    {file = "rpds_py-0.21.0-cp312-cp312-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:ebf64e281a06c904a7636781d2e973d1f0926a5b8b480ac658dc0f556e7779f4"},
+    {file = "rpds_py-0.21.0-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:998a8080c4495e4f72132f3d66ff91f5997d799e86cec6ee05342f8f3cda7dca"},
+    {file = "rpds_py-0.21.0-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:98486337f7b4f3c324ab402e83453e25bb844f44418c066623db88e4c56b7c7b"},
+    {file = "rpds_py-0.21.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:a78d8b634c9df7f8d175451cfeac3810a702ccb85f98ec95797fa98b942cea11"},
+    {file = "rpds_py-0.21.0-cp312-none-win32.whl", hash = "sha256:a58ce66847711c4aa2ecfcfaff04cb0327f907fead8945ffc47d9407f41ff952"},
+    {file = "rpds_py-0.21.0-cp312-none-win_amd64.whl", hash = "sha256:e860f065cc4ea6f256d6f411aba4b1251255366e48e972f8a347cf88077b24fd"},
+    {file = "rpds_py-0.21.0-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:ee4eafd77cc98d355a0d02f263efc0d3ae3ce4a7c24740010a8b4012bbb24937"},
+    {file = "rpds_py-0.21.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:688c93b77e468d72579351a84b95f976bd7b3e84aa6686be6497045ba84be560"},
+    {file = "rpds_py-0.21.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c38dbf31c57032667dd5a2f0568ccde66e868e8f78d5a0d27dcc56d70f3fcd3b"},
+    {file = "rpds_py-0.21.0-cp313-cp313-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:2d6129137f43f7fa02d41542ffff4871d4aefa724a5fe38e2c31a4e0fd343fb0"},
+    {file = "rpds_py-0.21.0-cp313-cp313-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:520ed8b99b0bf86a176271f6fe23024323862ac674b1ce5b02a72bfeff3fff44"},
+    {file = "rpds_py-0.21.0-cp313-cp313-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:aaeb25ccfb9b9014a10eaf70904ebf3f79faaa8e60e99e19eef9f478651b9b74"},
+    {file = "rpds_py-0.21.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:af04ac89c738e0f0f1b913918024c3eab6e3ace989518ea838807177d38a2e94"},
+    {file = "rpds_py-0.21.0-cp313-cp313-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:b9b76e2afd585803c53c5b29e992ecd183f68285b62fe2668383a18e74abe7a3"},
+    {file = "rpds_py-0.21.0-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:5afb5efde74c54724e1a01118c6e5c15e54e642c42a1ba588ab1f03544ac8c7a"},
+    {file = "rpds_py-0.21.0-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:52c041802a6efa625ea18027a0723676a778869481d16803481ef6cc02ea8cb3"},
+    {file = "rpds_py-0.21.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:ee1e4fc267b437bb89990b2f2abf6c25765b89b72dd4a11e21934df449e0c976"},
+    {file = "rpds_py-0.21.0-cp313-none-win32.whl", hash = "sha256:0c025820b78817db6a76413fff6866790786c38f95ea3f3d3c93dbb73b632202"},
+    {file = "rpds_py-0.21.0-cp313-none-win_amd64.whl", hash = "sha256:320c808df533695326610a1b6a0a6e98f033e49de55d7dc36a13c8a30cfa756e"},
+    {file = "rpds_py-0.21.0.tar.gz", hash = "sha256:ed6378c9d66d0de903763e7706383d60c33829581f0adff47b6535f1802fa6db"},
+]
+
+[[package]]
 name = "ruff"
 version = "0.7.2"
 requires_python = ">=3.7"
@@ -723,17 +848,6 @@ files = [
     {file = "ruff-0.7.2-py3-none-win_amd64.whl", hash = "sha256:dd8800cbe0254e06b8fec585e97554047fb82c894973f7ff18558eee33d1cb88"},
     {file = "ruff-0.7.2-py3-none-win_arm64.whl", hash = "sha256:bb8368cd45bba3f57bb29cbb8d64b4a33f8415d0149d2655c5c8539452ce7760"},
     {file = "ruff-0.7.2.tar.gz", hash = "sha256:2b14e77293380e475b4e3a7a368e14549288ed2931fce259a6f99978669e844f"},
-]
-
-[[package]]
-name = "shellingham"
-version = "1.5.4"
-requires_python = ">=3.7"
-summary = "Tool to Detect Surrounding Shell"
-groups = ["default"]
-files = [
-    {file = "shellingham-1.5.4-py2.py3-none-any.whl", hash = "sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686"},
-    {file = "shellingham-1.5.4.tar.gz", hash = "sha256:8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de"},
 ]
 
 [[package]]
@@ -796,20 +910,14 @@ files = [
 ]
 
 [[package]]
-name = "typer"
-version = "0.13.0"
-requires_python = ">=3.7"
-summary = "Typer, build great CLIs. Easy to code. Based on Python type hints."
+name = "tomlkit"
+version = "0.13.2"
+requires_python = ">=3.8"
+summary = "Style preserving TOML library"
 groups = ["default"]
-dependencies = [
-    "click>=8.0.0",
-    "rich>=10.11.0",
-    "shellingham>=1.3.0",
-    "typing-extensions>=3.7.4.3",
-]
 files = [
-    {file = "typer-0.13.0-py3-none-any.whl", hash = "sha256:d85fe0b777b2517cc99c8055ed735452f2659cd45e451507c76f48ce5c1d00e2"},
-    {file = "typer-0.13.0.tar.gz", hash = "sha256:f1c7198347939361eec90139ffa0fd8b3df3a2259d5852a0f7400e476d95985c"},
+    {file = "tomlkit-0.13.2-py3-none-any.whl", hash = "sha256:7a974427f6e119197f670fbbbeae7bef749a6c14e793db934baefc1b5f03efde"},
+    {file = "tomlkit-0.13.2.tar.gz", hash = "sha256:fff5fe59a87295b278abd31bec92c15d9bc4a06885ab12bcea52c71119392e79"},
 ]
 
 [[package]]
@@ -913,4 +1021,15 @@ files = [
     {file = "yarl-1.17.1-cp313-cp313-win_amd64.whl", hash = "sha256:949681f68e0e3c25377462be4b658500e85ca24323d9619fdc41f68d46a1ffda"},
     {file = "yarl-1.17.1-py3-none-any.whl", hash = "sha256:f1790a4b1e8e8e028c391175433b9c8122c39b46e1663228158e61e6f915bf06"},
     {file = "yarl-1.17.1.tar.gz", hash = "sha256:067a63fcfda82da6b198fa73079b1ca40b7c9b7994995b6ee38acda728b64d47"},
+]
+
+[[package]]
+name = "zipp"
+version = "3.20.2"
+requires_python = ">=3.8"
+summary = "Backport of pathlib-compatible object wrapper for zip files"
+groups = ["default"]
+files = [
+    {file = "zipp-3.20.2-py3-none-any.whl", hash = "sha256:a817ac80d6cf4b23bf7f2828b7cabf326f15a001bea8b1f9b49631780ba28350"},
+    {file = "zipp-3.20.2.tar.gz", hash = "sha256:bc9eb26f4506fda01b81bcde0ca78103b6e62f991b381fec825435c836edbc29"},
 ]

@@ -45,8 +45,7 @@ dependencies = [
     # ---
 
     # Luma = <firework.cli>
-    # Credits: Elaina
-    "typer>=0.13.0",
+    # Credits: BlueGlassBlock, Elaina
     # ---
 
     # Launart = <firework.bootstrap>
@@ -67,6 +66,10 @@ dependencies = [
     #       只是我来的太晚了。
     #       对不起。
     # ---
+    "importlib-metadata>=8.5.0",
+    "tomlkit>=0.13.2",
+    "jsonschema>=4.23.0",
+    "dacite>=1.8.1"
 ]
 requires-python = ">=3.11"
 readme = "README.md"
@@ -88,3 +91,7 @@ line-length = 135
 
 [tool.ruff.lint]
 extend-select = ["I001"]
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
