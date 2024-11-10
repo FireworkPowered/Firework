@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Literal, Union
 
 from jsonschema import Draft202012Validator
 
-from ..utils import cp_field
+from ..util import cp_field
 
 
 @dataclass

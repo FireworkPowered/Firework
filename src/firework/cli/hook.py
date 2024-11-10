@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from .term import UI
-from .utils import cp_field
+from .util import cp_field
 
 
 @dataclass

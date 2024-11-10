@@ -27,7 +27,7 @@ from .bootstrap.utils import ErrorArgumentParser, LumaFormatter
 from .config import Component, LumaConfig, load_content
 from .exceptions import LumaArgumentError, LumaConfigError, LumaError
 from .hook import HookManager
-from .utils import load_from_string
+from .util import load_from_string
 
 
 class Core:
