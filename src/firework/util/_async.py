@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Awaitable, Coroutine, Iterable
+from typing import Coroutine, Iterable
 
 from loguru import logger
 
