@@ -97,6 +97,7 @@ distribution = true
 [tool.pdm.scripts]
 regenerate-cli-schema = {call = "firework_devel.regenerate_cli_schema:main"}
 lab = {call = "firework_devel.lab:via_typer"}
+cloc = {shell = "tokei src"}
 
 [tool.ruff]
 line-length = 135
