@@ -26,7 +26,7 @@ class TestService1(Service):
     id = "test_service_1"
 
     async def launch(self, context: ServiceContext):
-        asyncio.create_task(reporter(self.id, context))
+        # asyncio.create_task(reporter(self.id, context))
 
         async with context.prepare():
             print(self.id, "prepare")
@@ -49,7 +49,7 @@ class TestService2(Service):
 
     @_xx()
     async def launch(self, context: ServiceContext):
-        asyncio.create_task(reporter(self.id, context))
+        # asyncio.create_task(reporter(self.id, context))
 
         async with context.prepare():
             print(self.id, "prepare")
@@ -58,12 +58,12 @@ class TestService2(Service):
 
         async with context.online():
             print(self.id, "online")
-            await asyncio.sleep(3)
+            # await asyncio.sleep(3)
             print("[test sideload] starting")
-            # await context.bootstrap.update([TestService3()])
+            await context.bootstrap.update([TestService3()])
             print("[test sideload] update called")
             srv = context.bootstrap.get_service(TestService3)
-            # context.bootstrap.get_context(TestService3).dispatch_online()
+            context.bootstrap.get_context(TestService3).dispatch_online()
             print(f"[test sideload] service obtained: {srv}")
             await context.bootstrap.offline([srv])
             print("[test sideload] offline called")
@@ -117,5 +117,5 @@ class TestService3(Service):
 
 
 bootstrap = Bootstrap()
-
+bootstrap.add_initial_services(TestService1(), TestService2())
 bootstrap.launch_blocking()
