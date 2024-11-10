@@ -38,12 +38,14 @@ class UnhandledExit(Exception):
 
 
 class Bootstrap:
+    initial_services: dict[str, Service]
     services: dict[str, Service]
     contexts: dict[str, ServiceContext]
     daemon_tasks: dict[str, asyncio.Task]
     task_group: TaskGroup
 
     def __init__(self) -> None:
+        self.initial_services = {}
         self.services = {}
         self.contexts = {}
         self.daemon_tasks = {}
@@ -68,6 +70,14 @@ class Bootstrap:
             service_or_id = service_or_id.id
 
         return self.contexts[service_or_id]
+
+    def add_initial_services(self, *services: Service):
+        for service in services:
+            self.initial_services[service.id] = service
+
+    def remove_initial_services(self, *services: type[Service]):
+        for service in services:
+            self.initial_services.pop(service.id)
 
     async def _service_daemon(self, service: Service, context: ServiceContext):
         try:
@@ -174,6 +184,11 @@ class Bootstrap:
             context.dispatch_online()
 
     async def launch(self):
+        if not self.initial_services:
+            raise ValueError("No services to launch.")
+
+        self.services.update(self.initial_services)
+
         with cvar(BOOTSTRAP_CONTEXT, self):
             failed_updating = await self.update(self.services.values(), rollback=True)
 
