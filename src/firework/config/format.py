@@ -4,7 +4,7 @@ import inspect
 from dataclasses import MISSING, Field, asdict, is_dataclass
 from typing import Union, cast
 
-from .jsonc_backend.types import Array, BlockStyleComment, JObject, JString, JType, convert
+from .json5_backend.types import Array, BlockStyleComment, JObject, JString, JType, convert
 from .schema_gen import ConfigModel
 
 

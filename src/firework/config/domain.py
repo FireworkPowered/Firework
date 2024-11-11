@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Type
 
 from .format import format_with_model
-from .jsonc_backend import dumps, loads
-from .jsonc_backend.types import JObject
+from .json5_backend import dumps, loads
+from .json5_backend.types import JObject
 from .pretty import Prettifier
 from .schema_gen import ConfigModel, SchemaGenerator, write_schema_ref
 from .spec import FormattedPath, parse_path, parse_source
@@ -88,7 +88,7 @@ def initialize(
         ```py
         from kayaku import bootstrap, config, initialize
 
-        initialize({"{**}.connection": "./config/connection.jsonc::{**}})
+        initialize({"{**}.connection": "./config/connection.json5::{**}})
 
         @config("my_mod.config.connection")
         class Connection:
@@ -100,7 +100,7 @@ def initialize(
         bootstrap()
         ```
 
-        以上代码将会将 `Connection` 类的数据存储在 `./config/connection.jsonc` 文件的 `["my_mod"]["config"]` 里.
+        以上代码将会将 `Connection` 类的数据存储在 `./config/connection.json5` 文件的 `["my_mod"]["config"]` 里.
     """
     global _store
     _store = _GlobalStore(prettifier or Prettifier(), schema_generator_cls)

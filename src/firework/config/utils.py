@@ -13,7 +13,7 @@ from dacite.config import Config
 from dacite.core import from_dict as _from_dict
 from typing_extensions import TypeAlias
 
-from .jsonc_backend.types import Array, JContainer, JObject, JType, JWrapper, convert
+from .json5_backend.types import Array, JContainer, JObject, JType, JWrapper, convert
 from .schema_gen import ConfigModel
 
 DomainType: TypeAlias = "tuple[str, ...]"

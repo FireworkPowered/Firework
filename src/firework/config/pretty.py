@@ -8,7 +8,7 @@ from typing import TypeVar
 
 import regex
 
-from .jsonc_backend.types import (
+from .json5_backend.types import (
     WSC,
     Array,
     BlockStyleComment,
