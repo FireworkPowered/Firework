@@ -11,7 +11,7 @@ except ImportError:
 
 
 class AiohttpClient(Service):
-    id = "org.fireworkpowered.bootstrap.aiohttp"
+    id = "aiohttp.client"
 
     def __init__(self, session: ClientSession | None = None):
         self._session = session

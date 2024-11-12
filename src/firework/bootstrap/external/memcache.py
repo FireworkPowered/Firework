@@ -53,7 +53,7 @@ class Memcache:
 
 
 class MemcacheService(Service):
-    id = "org.fireworkpowered.bootstrap.memcache"
+    id = "memcache"
 
     interval: float
     _cache: dict[str, tuple[float | None, Any]]

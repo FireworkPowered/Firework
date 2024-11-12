@@ -36,7 +36,7 @@ dependencies = [
     "awaitlet>=0.0.1",
     # ---
 
-    # Nekobox = <firework.backend.lagrange>
+    # Nekobox = <firework.framework.backend.lagrange>
     # Credits: wyapx; Tarraint; linwenxuan; Elaina, ...
     "lagrange-python>=0.1.5",
     # ---

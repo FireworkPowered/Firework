@@ -20,13 +20,7 @@ DomainType: TypeAlias = "tuple[str, ...]"
 
 T = TypeVar("T", bound=ConfigModel)
 
-Unions = (
-    {
-        Union,
-    }
-    if sys.version_info < (3, 10)
-    else {Union, types.UnionType}
-)
+Unions = {Union} if sys.version_info < (3, 10) else {Union, types.UnionType}
 
 
 def copy_meta(src: Any, dst: JType):
