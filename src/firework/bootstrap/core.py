@@ -208,22 +208,19 @@ class Bootstrap:
         self.services.update(self.initial_services)
 
         with cvar(BOOTSTRAP_CONTEXT, self):
-            failed_updating = await self.update(self.services.values(), rollback=True)
+            failed = []
+
+            online_dispatch = await self.start_lifespan(self.services.values(), failed_record=failed, rollback=True)
+            offline_callback = online_dispatch()
 
             try:
-                if failed_updating is None:
-                    for service in self.initial_services.values():
-                        self.contexts[service.id].dispatch_online()
-
+                if not failed:
                     await self.task_group.wait()
+
             finally:
-                failed_offline = await self.offline(self.services.values())
+                await offline_callback()
 
-                if failed_updating or failed_offline:
-                    failed = failed_updating or []
-                    if failed_offline:
-                        failed.extend(failed_offline)
-
+                if failed:
                     raise BaseExceptionGroup("service cleanup failed", [i.exception() or UnhandledExit() for i in failed])
 
     def launch_blocking(
