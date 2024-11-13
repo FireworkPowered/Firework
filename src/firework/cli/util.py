@@ -1,12 +1,22 @@
 from __future__ import annotations
 
 import copy
+import functools
 import importlib
 import subprocess
 import sys
 from dataclasses import field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
+
+from .exceptions import LumaConfigError
+
+if TYPE_CHECKING:
+    from .config import LumaConfig
+    from .core import Core
+
+
+_T = TypeVar("_T")
 
 
 def is_pipx_env() -> bool:
@@ -46,3 +56,13 @@ def load_from_string(import_str: str) -> Any:
 
 def cp_field(value) -> Any:
     return field(default_factory=lambda: copy.deepcopy(value))
+
+
+def ensure_config(meth: Callable[[_T, Core, LumaConfig, Any], Any]) -> Callable[[_T, Core, Any], Any]:
+    @functools.wraps(meth)
+    def wrapper(self: _T, core: Core, namespace: Any) -> Any:
+        if core.config is None:
+            raise LumaConfigError("This command requires valid `firework.toml` in project root")
+        return meth(self, core, core.config, namespace)
+
+    return wrapper

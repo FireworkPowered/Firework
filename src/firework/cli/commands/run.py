@@ -8,11 +8,11 @@ from contextlib import contextmanager, suppress
 from typing import Any
 
 from ..base import Command
-from ..commands.utils import ensure_config
 from ..config import LumaConfig, SingleModule
 from ..core import Core
 from ..exceptions import LumaConfigError
 from ..term import UI
+from ..util import ensure_config
 
 
 def plugin(core: Core):
