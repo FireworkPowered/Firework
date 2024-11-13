@@ -79,15 +79,23 @@ class Bootstrap:
         for service in services:
             self.initial_services.pop(service.id)
 
-    async def start_lifespan(self, services: Iterable[Service], *, rollback: bool = False):
-        await self.update(services, rollback=rollback)
+    async def start_lifespan(
+        self, services: Iterable[Service], *, rollback: bool = False, failed_record: list[asyncio.Task] | None = None
+    ):
+        failed_update = await self.update(services, rollback=rollback)
+
+        if failed_record is not None and failed_update is not None:
+            failed_record.extend(failed_update)
 
         def _online():
             for service in services:
                 self.contexts[service.id].dispatch_online()
 
             async def _offline():
-                await self.offline(services)
+                failed_offline = await self.offline(services)
+
+                if failed_record is not None and failed_offline is not None:
+                    failed_record.extend(failed_offline)
 
             return _offline
 
