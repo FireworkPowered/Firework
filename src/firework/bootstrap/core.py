@@ -79,6 +79,20 @@ class Bootstrap:
         for service in services:
             self.initial_services.pop(service.id)
 
+    async def start_lifespan(self, services: Iterable[Service], *, rollback: bool = False):
+        await self.update(services, rollback=rollback)
+
+        def _online():
+            for service in services:
+                self.contexts[service.id].dispatch_online()
+
+            async def _offline():
+                await self.offline(services)
+
+            return _offline
+
+        return _online
+
     async def _service_daemon(self, service: Service, context: ServiceContext):
         try:
             await service.launch(context)
