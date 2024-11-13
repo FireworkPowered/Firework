@@ -201,10 +201,6 @@ class Bootstrap:
                 self.contexts.pop(target)
                 self.daemon_tasks.pop(target)
 
-    def _enter_online_stage(self):
-        for context in self.contexts.values():
-            context.dispatch_online()
-
     async def launch(self):
         if not self.initial_services:
             raise ValueError("No services to launch.")
@@ -216,7 +212,8 @@ class Bootstrap:
 
             try:
                 if failed_updating is None:
-                    self._enter_online_stage()
+                    for service in self.initial_services.values():
+                        self.contexts[service.id].dispatch_online()
 
                     await self.task_group.wait()
             finally:
