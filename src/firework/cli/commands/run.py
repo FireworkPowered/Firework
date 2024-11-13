@@ -9,13 +9,13 @@ from typing import Any
 
 from ..base import Command
 from ..config import LumaConfig, SingleModule
-from ..core import Core
+from ..core import CliCore
 from ..exceptions import LumaConfigError
 from ..term import UI
 from ..util import ensure_config
 
 
-def plugin(core: Core):
+def plugin(core: CliCore):
     core.register_command(RunCommand)
 
 
@@ -33,7 +33,7 @@ class RunCommand(Command):
     description = "Run your bot."
 
     @ensure_config
-    def handle(self, core: Core, config: LumaConfig, options: argparse.Namespace) -> None:
+    def handle(self, core: CliCore, config: LumaConfig, options: argparse.Namespace) -> None:
         require_modules = []
         for mod in config.modules:
             if isinstance(mod, SingleModule):

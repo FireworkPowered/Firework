@@ -13,7 +13,7 @@ from .exceptions import LumaConfigError
 
 if TYPE_CHECKING:
     from .config import LumaConfig
-    from .core import Core
+    from .core import CliCore
 
 
 _T = TypeVar("_T")
@@ -58,9 +58,9 @@ def cp_field(value) -> Any:
     return field(default_factory=lambda: copy.deepcopy(value))
 
 
-def ensure_config(meth: Callable[[_T, Core, LumaConfig, Any], Any]) -> Callable[[_T, Core, Any], Any]:
+def ensure_config(meth: Callable[[_T, CliCore, LumaConfig, Any], Any]) -> Callable[[_T, CliCore, Any], Any]:
     @functools.wraps(meth)
-    def wrapper(self: _T, core: Core, namespace: Any) -> Any:
+    def wrapper(self: _T, core: CliCore, namespace: Any) -> Any:
         if core.config is None:
             raise LumaConfigError("This command requires valid `firework.toml` in project root")
         return meth(self, core, core.config, namespace)

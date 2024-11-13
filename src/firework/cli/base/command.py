@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from .utils import LumaFormatter, Option
 
 if TYPE_CHECKING:
-    from ..core import Core
+    from ..core import CliCore
 
 
 verbose_option = Option(
@@ -74,7 +74,7 @@ class Command(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def handle(self, core: Core, options: argparse.Namespace) -> None:
+    def handle(self, core: CliCore, options: argparse.Namespace) -> None:
         """The command handler function.
         :param options: the parsed Namespace object
         """

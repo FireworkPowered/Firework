@@ -28,7 +28,7 @@ from .hook import HookManager
 from .util import load_from_string
 
 
-class Core:
+class CliCore:
     def __init__(self) -> None:
         self.parser: ErrorArgumentParser = ErrorArgumentParser(
             "firework",
@@ -193,4 +193,4 @@ class Core:
 
 def main(args: list[str] | None = None) -> None:
     """The CLI entry function"""
-    return Core().main(args)
+    return CliCore().main(args)

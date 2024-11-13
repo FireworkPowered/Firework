@@ -2,11 +2,11 @@ import argparse
 from pathlib import Path
 
 from ..base import Command
-from ..core import Core
+from ..core import CliCore
 from ..exceptions import LumaUsageError
 
 
-def plugin(core: Core):
+def plugin(core: CliCore):
     core.register_command(InitCommand)
 
 
@@ -17,7 +17,7 @@ class InitCommand(Command):
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--non-interactive", default=False, help="Run in non-interactive mode.")
 
-    def handle(self, core: Core, options: argparse.Namespace) -> None:
+    def handle(self, core: CliCore, options: argparse.Namespace) -> None:
         core.ui.echo("[primary]Initializing [req]firework.toml")
         interactive: bool = not options.non_interactive
         if not interactive:
