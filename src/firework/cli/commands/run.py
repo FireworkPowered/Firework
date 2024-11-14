@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 import argparse
-import importlib
-import importlib.util
-import pkgutil
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
 from typing import Any
 
+from firework.bootstrap import Bootstrap
+from firework.config import initialize
+
 from ..base import Command
-from ..config import LumaConfig, SingleModule
+from ..config import LumaConfig
 from ..core import CliCore
 from ..exceptions import LumaConfigError
 from ..term import UI
-from ..util import ensure_config
+from ..util import ensure_config, load_from_string
 
 
 def plugin(core: CliCore):
@@ -34,65 +34,66 @@ class RunCommand(Command):
 
     @ensure_config
     def handle(self, core: CliCore, config: LumaConfig, options: argparse.Namespace) -> None:
-        require_modules = []
-        for mod in config.modules:
-            if isinstance(mod, SingleModule):
-                require_modules.append(mod.endpoint)
-                core.ui.echo(f"Adding module [info]{mod.endpoint}[/info]", verbosity=2)
-            else:
-                iter_pth = [mod.endpoint]
-                with suppress(ImportError):
-                    iter_pth = list(importlib.import_module(mod.endpoint).__path__)
-                for mod_info in pkgutil.iter_modules(iter_pth):
-                    if mod_info.name in mod.exclude:
-                        continue
-                    candidate_name = f"{mod.endpoint}.{mod_info.name}"
-                    if importlib.util.find_spec(candidate_name) is None:
-                        core.ui.echo(f"[warning]{candidate_name} is invalid module, skipping")
-                        continue
-                    require_modules.append(candidate_name)
-                    core.ui.echo(f"Adding module [info]{candidate_name}[/info]")
+        # require_modules = []
+        # for mod in config.modules:
+        #     if isinstance(mod, SingleModule):
+        #         require_modules.append(mod.endpoint)
+        #         core.ui.echo(f"Adding module [info]{mod.endpoint}[/info]", verbosity=2)
+        #     else:
+        #         iter_pth = [mod.endpoint]
+        #         with suppress(ImportError):
+        #             iter_pth = list(importlib.import_module(mod.endpoint).__path__)
+        #         for mod_info in pkgutil.iter_modules(iter_pth):
+        #             if mod_info.name in mod.exclude:
+        #                 continue
+        #             candidate_name = f"{mod.endpoint}.{mod_info.name}"
+        #             if importlib.util.find_spec(candidate_name) is None:
+        #                 core.ui.echo(f"[warning]{candidate_name} is invalid module, skipping")
+        #                 continue
+        #             require_modules.append(candidate_name)
+        #             core.ui.echo(f"Adding module [info]{candidate_name}[/info]")
 
         runtime_ctx: dict[str, Any] = {}
 
         # Set up runner core
         run_hook_target = core.hooks.targets.get("run")
-        if not run_hook_target:
-            msg = "Running target not configured!"
-            raise LumaConfigError(msg)
-
-        if len(run_hook_target.core) != 1:
-            msg = f"Found {len(run_hook_target.core)} running target(s) instead of 1!"
-            raise LumaConfigError(msg)
-
         # Run configuration hooks
-        if config_target := core.hooks.targets.get("run_config"):
-            config_target.warn_hooks(core.ui, pre=True, post=True)
-            for hook_fn in config_target.core:
-                hook_fn(core, runtime_ctx)
+        # if config_target := core.hooks.targets.get("run_config"):
+        #     config_target.warn_hooks(core.ui, pre=True, post=True)
+        #     for hook_fn in config_target.core:
+        #         hook_fn(core, runtime_ctx)
 
-        # Kayaku startup
-        # import kayaku
-        # import kayaku.pretty
+        if run_hook_target is not None:
+            for pre_fn in run_hook_target.pre:
+                pre_fn(core, runtime_ctx)
 
-        # kayaku.initialize(config.config.endpoints, kayaku.pretty.Prettifier(**config.config.format))
+        initialize(config.config.sources)
 
-        # Import Saya modules
-        # import creart
-        # from graia.saya import Saya
+        # collect services
+        services = []
 
-        # saya: Saya = runtime_ctx.get("saya") or creart.it(Saya)
-        # runtime_ctx["saya"] = saya
-        # with saya.module_context():
-        #     for mod in require_modules:
-        #         saya.require(mod)
+        for desc in config.services:
+            if desc.type == "entrypoint":
+                factory = core.service_integrates.get(desc.entrypoint)
+                if factory is None:
+                    raise LumaConfigError(f"Service entrypoint {desc.entrypoint} is not registered!")
 
-        # Invoke run hook
-        run_hook_target.warn_hooks(core.ui, post=True)
-        for pre_fn in run_hook_target.pre:
-            pre_fn(core, runtime_ctx)
+                services.append(factory())
+            elif desc.type == "custom":
+                services.append(load_from_string(desc.module)())
+            else:
+                ...  # unreachable
 
-        # Kayaku bootstrap
-        # kayaku.bootstrap()
+        if not services:
+            core.ui.echo("[error]No services are configured, so nothing will happen.", err=True)
+            return
 
-        run_hook_target.core[0](core, runtime_ctx)
+        bootstrap = Bootstrap()
+        bootstrap.add_initial_services(*services)
+
+        try:
+            bootstrap.launch_blocking()
+        finally:
+            if run_hook_target is not None:
+                for post_fn in run_hook_target.post:
+                    post_fn(core, runtime_ctx)

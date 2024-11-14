@@ -10,6 +10,6 @@ def plugin(core: CliCore):
 
 class SelfCommand(Command):
     name = "self"
-    description = "Act with luma itself."
+    description = "Operate on Firework CLI itself"
 
     def handle(self, core: CliCore, options: argparse.Namespace) -> None: ...
