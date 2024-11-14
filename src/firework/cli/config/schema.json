@@ -3,35 +3,23 @@
     "type": "object",
     "title": "firework.cli.config.LumaConfig",
     "properties": {
-        "metadata": {
-            "$ref": "#/$defs/firework.cli.config.Metadata"
+        "deployment": {
+            "$ref": "#/$defs/firework.cli.config.Deployment"
         },
         "config": {
             "$ref": "#/$defs/firework.cli.config.Config"
         },
-        "modules": {
+        "services": {
             "type": "array",
             "items": {
                 "anyOf": [
                     {
-                        "$ref": "#/$defs/firework.cli.config.SingleModule"
+                        "$ref": "#/$defs/firework.cli.config.ServiceEntrypoint"
                     },
                     {
-                        "$ref": "#/$defs/firework.cli.config.MultiModule"
+                        "$ref": "#/$defs/firework.cli.config.ServiceCustom"
                     }
                 ]
-            }
-        },
-        "storage": {
-            "type": "object",
-            "additionalProperties": {
-                "type": "string"
-            }
-        },
-        "components": {
-            "type": "array",
-            "items": {
-                "$ref": "#/$defs/firework.cli.config.Component"
             }
         },
         "hooks": {
@@ -41,17 +29,13 @@
             }
         }
     },
-    "required": [
-        "metadata"
-    ],
     "$defs": {
-        "firework.cli.config.Metadata": {
+        "firework.cli.config.Deployment": {
             "type": "object",
-            "title": "firework.cli.config.Metadata",
+            "title": "firework.cli.config.Deployment",
             "properties": {
-                "version": {
-                    "type": "string",
-                    "default": "0.1"
+                "root": {
+                    "type": "string"
                 }
             }
         },
@@ -59,74 +43,46 @@
             "type": "object",
             "title": "firework.cli.config.Config",
             "properties": {
-                "endpoints": {
+                "sources": {
                     "type": "object",
                     "additionalProperties": {
                         "type": "string"
                     }
-                },
-                "format": {
-                    "type": "object",
-                    "additionalProperties": {}
                 }
             }
         },
-        "firework.cli.config.SingleModule": {
+        "firework.cli.config.ServiceEntrypoint": {
             "type": "object",
-            "title": "firework.cli.config.SingleModule",
+            "title": "firework.cli.config.ServiceEntrypoint",
             "properties": {
-                "endpoint": {
+                "entrypoint": {
                     "type": "string"
                 },
                 "type": {
-                    "enum": [
-                        "single"
-                    ],
-                    "default": "single"
+                    "type": "string",
+                    "default": "entrypoint"
                 }
             },
             "required": [
-                "endpoint"
+                "entrypoint"
             ]
         },
-        "firework.cli.config.MultiModule": {
+        "firework.cli.config.ServiceCustom": {
             "type": "object",
-            "title": "firework.cli.config.MultiModule",
+            "title": "firework.cli.config.ServiceCustom",
             "properties": {
-                "endpoint": {
-                    "type": "string"
-                },
                 "type": {
                     "enum": [
-                        "multi"
+                        "custom"
                     ]
                 },
-                "exclude": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            },
-            "required": [
-                "endpoint",
-                "type"
-            ]
-        },
-        "firework.cli.config.Component": {
-            "type": "object",
-            "title": "firework.cli.config.Component",
-            "properties": {
-                "endpoint": {
+                "module": {
                     "type": "string"
-                },
-                "args": {
-                    "type": "object",
-                    "additionalProperties": {}
                 }
             },
             "required": [
-                "endpoint"
+                "type",
+                "module"
             ]
         },
         "firework.cli.config.Hook": {

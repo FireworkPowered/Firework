@@ -1,38 +1,11 @@
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Union
+from typing import Literal, Union
 
 from jsonschema import Draft202012Validator
 
 from firework.util.importlib import pkg_resources
-
-from ..util import cp_field
-
-
-@dataclass
-class Config:
-    endpoints: Dict[str, str] = cp_field({})
-    format: Dict[str, Any] = cp_field({})
-
-
-@dataclass
-class SingleModule:
-    endpoint: str
-    type: Literal["single"] = "single"
-
-
-@dataclass
-class MultiModule:
-    endpoint: str
-    type: Literal["multi"]
-    exclude: List[str] = cp_field([])
-
-
-@dataclass
-class Component:
-    endpoint: str
-    args: Dict[str, Any] = cp_field({})
 
 
 @dataclass
@@ -42,18 +15,33 @@ class Hook:
 
 
 @dataclass
-class Metadata:
-    version: str = "0.1"
+class Deployment:
+    root: str = field(default_factory=lambda: str(Path.cwd()))
+
+
+@dataclass
+class Config:
+    sources: dict[str, str] = field(default_factory=lambda: {"{**}": "config/{**}"})
+
+
+@dataclass
+class ServiceEntrypoint:
+    entrypoint: str
+    type: Literal["entrypoint"] = "entrypoint"
+
+
+@dataclass
+class ServiceCustom:
+    type: Literal["custom"]
+    module: str
 
 
 @dataclass
 class LumaConfig:
-    metadata: Metadata
-    config: Config = cp_field(Config())
-    modules: List[Union[SingleModule, MultiModule]] = cp_field([])
-    storage: Dict[str, str] = cp_field({})
-    components: List[Component] = cp_field([])
-    hooks: List[Hook] = cp_field([])
+    deployment: Deployment = field(default_factory=Deployment)
+    config: Config = field(default_factory=Config)
+    services: list[Union[ServiceEntrypoint, ServiceCustom]] = field(default_factory=list)
+    hooks: list[Hook] = field(default_factory=list)
 
 
 content_validator = Draft202012Validator(json.loads(pkg_resources.read_text(__name__, "schema.json", "utf-8")))
