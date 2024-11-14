@@ -31,14 +31,8 @@ dependencies = [
     # Credits: Elaina
     # ---
 
-    # Flywheel SansIO = <firework.framework.backend>
-    # Credits: Elaina
-    "awaitlet>=0.0.1",
-    # ---
-
     # Nekobox = <firework.framework.backend.lagrange>
     # Credits: wyapx; Tarraint; linwenxuan; Elaina, ...
-    "lagrange-python>=0.1.5",
     # ---
 
     # Kayaku = <firework.cli.config>
