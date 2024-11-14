@@ -14,7 +14,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 import importlib_metadata as pkg_meta
 from rich.traceback import Traceback
@@ -22,10 +22,13 @@ from typing_extensions import Self
 
 from . import term
 from .base import Command, ErrorArgumentParser, LumaFormatter, project_root_option, python_option, verbose_option
-from .config import Component, LumaConfig, into_config
-from .exceptions import LumaArgumentError, LumaConfigError, LumaError
+from .config import LumaConfig, into_config
+from .exceptions import LumaArgumentError, LumaError
 from .hook import HookManager
 from .util import load_from_string
+
+if TYPE_CHECKING:
+    from firework.bootstrap import Service
 
 
 class CliCore:
@@ -42,6 +45,7 @@ class CliCore:
         self.version: str = pkg_meta.version("firework-spark") or "development"
         self.hooks: HookManager = HookManager(self.ui)
         self.component_handlers: dict[str, Callable[[Self, dict[str, Any]], None]] = {}
+        self.service_integrates: dict[str, Callable[[], Service]] = {}
         self.called_components: set[str] = set()
         self._tweak_parser()
         self._load_plugins()
@@ -79,19 +83,19 @@ class CliCore:
         if config_file.exists():
             try:
                 self.config = into_config(config_file)
-                if (metadata_v := self.config.metadata.version) != "0.1":
-                    self.ui.echo(f"[error]Incompatible [req].toml[/req] version: {metadata_v}")
-                    self.config = None
-                    return
+                # if (metadata_v := self.config.metadata.version) != "0.1":
+                #     self.ui.echo(f"[error]Incompatible [req]firework.toml[/req] version: {metadata_v}")
+                #     self.config = None
+                #     return
             except ParseError as e:
-                self.ui.echo(f"[req].toml[/req] is invalid TOML file: {e!r}", err=True)
+                self.ui.echo(f"[req]firework.toml[/req] is invalid TOML file: {e!r}", err=True)
             except ValueError as e:  # JSON Schema error
-                self.ui.echo("[req].toml[/req] is not valid", err=True)
+                self.ui.echo("[req]firework.toml[/req] is not valid", err=True)
                 if self.ui.verbosity and "firework.toml" in str(e):
                     for exc in e.args[1]:
                         self.ui.echo(f"[error]{exc!r}", err=True)
             except Exception as e:
-                self.ui.echo(f"[error]Error during loading [req].toml[/req]: {e!r}", err=True)
+                self.ui.echo(f"[error]Error during loading [req]firework.toml[/req]: {e!r}", err=True)
 
     def register_command(self, command: type[Command]) -> None:
         self.ui.echo(f"Registering command [info]{command.name}[/info]", verbosity=2)
@@ -104,7 +108,6 @@ class CliCore:
             self.ui.echo("[info]Guessing Python path from invoking subprocess...", verbosity=1)
             py_path = subprocess.run(
                 ["python", "-X", "utf8", "-c", "import sys;print(sys.executable, end='')"],
-                shell=True,
                 encoding="utf-8",
                 stdout=subprocess.PIPE,
             ).stdout
@@ -135,28 +138,31 @@ class CliCore:
             # NOTE: Here we assume EVERY component is CORRECTLY implemented.
             ep.load()(self)
 
-    def _call_component(self, component: Component) -> None:
-        name, _, sub = component.endpoint.partition(":")
-        try:
-            handler = self.component_handlers[name]
-        except KeyError as exc:
-            msg = f"Component {name} does not exist!"
-            raise LumaConfigError(msg) from exc
-        args = {"__sub__": sub or None, **component.args}
-        handler(self, args)
-        self.called_components.union((name, component.endpoint))
+    # def _call_component(self, component: Component) -> None:
+    #     name, _, sub = component.endpoint.partition(":")
+    #     try:
+    #         handler = self.component_handlers[name]
+    #     except KeyError as exc:
+    #         msg = f"Component {name} does not exist!"
+    #         raise LumaConfigError(msg) from exc
+    #     args = {"__sub__": sub or None, **component.args}
+    #     handler(self, args)
+    #     self.called_components.union((name, component.endpoint))
 
     def _bootstrap_luma_file(self):
         if not self.config:
             return
-        for component in self.config.components:
-            self._call_component(component)
+        # for component in self.config.components:
+        #     self._call_component(component)
         for hook in self.config.hooks:
             hook_fn = load_from_string(hook.endpoint)
             if not callable(hook_fn):
                 self.ui.echo(f"[error][info]{hook.endpoint}[/info] is not callable, skipping", err=True)
                 continue
             self.hooks.add_hook(hook.target, load_from_string(hook.endpoint))
+
+    def add_service_integrate(self, entrypoint: str, integrate: Callable[[], Service]):
+        self.service_integrates[entrypoint] = integrate
 
     def main(self, args: list[str] | None) -> None:
         args = args or sys.argv[1:]

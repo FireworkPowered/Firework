@@ -60,6 +60,7 @@ dependencies = [
     # Avilla = <firework.framework.core>
     # Credits: Elaina; BlueGlassBlock; ProgramRipper; Tarraint
     # ---
+    "case-converter>=1.1.0"
 ]
 requires-python = ">=3.11"
 readme = "README.md"
@@ -74,10 +75,13 @@ richuru = ["richuru>=0.1.1"]
 firework = "firework.cli.core:main"
 
 [project.entry-points."firework.cli.plugin"]
-self = "firework.cli.commands.self:plugin"
+do_self = "firework.cli.commands.self:plugin"
+do_run = "firework.cli.commands.run:plugin"
+
+prelude = "firework.cli.prelude:plugin"
 
 [dependency-groups]
-dev = ["ruff>=0.7.2", "pytest>=8.3.3", "noneprompt>=0.1.9", "typer>=0.13.0"]
+dev = ["ruff>=0.7.2", "pytest>=8.3.3", "noneprompt>=0.1.9", "typer>=0.13.0", "git-filter-repo>=2.45.0"]
 
 [tool.pdm]
 distribution = true
