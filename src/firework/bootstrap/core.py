@@ -189,6 +189,7 @@ class Bootstrap:
                 unity([i.wait_for(Stage.CLEANUP, Phase.COMPLETED) for i in _contexts.values()]),  # awaiting_prepare
             )
             completed_task, _ = await any_completed([awaiting_cleanup, awaiting_daemon_exit])
+            await any_completed([awaiting_cleanup, awaiting_daemon_exit])  # complete all tasks
 
             if completed_task is awaiting_daemon_exit and not awaiting_cleanup.done():
                 completed_daemon = [task for task in daemon_tasks if task.done()]
