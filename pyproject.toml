@@ -6,9 +6,6 @@ authors = [
     {name = "Elaina", email = "GreyElaina@outlook.com"},
 ]
 dependencies = [
-    # 我只凭我的记忆写下这些。
-    # 如果我做错了什么，对不起。
-    
     # Common
     "loguru>=0.7.2",
     "richuru>=0.1.1",
@@ -31,11 +28,11 @@ dependencies = [
     # Credits: Elaina
     # ---
 
-    # Nekobox = <firework.framework.backend.lagrange>
+    # Nekobox = <firework.backend.lagrange>
     # Credits: wyapx; Tarraint; linwenxuan; Elaina, ...
     # ---
 
-    # Kayaku = <firework.cli.config>
+    # Kayaku = <firework.config>
     # Credits: BlueGlassBlock; Elaina
     "lark[regex]>=1.2.2",
     # ---
@@ -62,9 +59,6 @@ dependencies = [
 
     # Avilla = <firework.framework.core>
     # Credits: Elaina; BlueGlassBlock; ProgramRipper; Tarraint
-    # Note: ……别担心，Firework 只能是我自己的一厢情愿，它终究无法与 Graia 割舍一分一毫，上面的记录即是见证。
-    #       只是我来的太晚了。
-    #       对不起。
     # ---
 ]
 requires-python = ">=3.11"
