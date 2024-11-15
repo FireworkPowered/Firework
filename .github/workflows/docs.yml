@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  INSTANCE: 'Writerside/Firework'
+  INSTANCE: 'Writerside/spark'
   ARTIFACT: 'firework-docs.zip'
   DOCKER_VERSION: '243.21565'
 
