@@ -28,4 +28,11 @@ def plugin(core: CliCore):
 
     core.add_service_integrate("memcache", memcache)
 
+    def config_load():
+        from firework.bootstrap.external.config import ConfigLoadSerice
+
+        return ConfigLoadSerice()
+
+    core.add_service_integrate("firework.config", config_load)
+
     # TODO: add more integrations
