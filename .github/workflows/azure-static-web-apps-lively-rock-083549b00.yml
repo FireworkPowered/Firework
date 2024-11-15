@@ -53,8 +53,10 @@ jobs:
         with:
           name: firework-docs
 
+      - run: ls -R ${{ steps.download.outputs.download-path }}
+
       - name: Unzip artifact
-        run: unzip -O UTF-8 -qq ${{ steps.download.outputs.download-path }} -d dist
+        run: unzip -O UTF-8 -qq ${{ steps.download.outputs.download-path }}/firework-docs.zip -d dist
 
       - name: Build And Deploy
         id: builddeploy
