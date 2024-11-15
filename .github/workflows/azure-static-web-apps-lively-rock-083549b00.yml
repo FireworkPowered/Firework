@@ -30,10 +30,21 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Cache Writerside build
+        id: cache-writerside
+        uses: actions/cache@v4
+        with:
+          path: |
+            artifacts/${{ env.ARTIFACT }}
+          key: ${{ runner.os }}-writerside-${{ hashFiles('docs/**') }}
+          restore-keys: |
+            ${{ runner.os }}-writerside-
+
       - name: chdir docs
         run: cd docs
 
       - name: Build docs using Writerside Docker builder
+        if: steps.cache-writerside.outputs.cache-hit != 'true'
         uses: JetBrains/writerside-github-action@v4
         with:
           instance: ${{ env.INSTANCE }}
@@ -41,6 +52,7 @@ jobs:
           docker-version: ${{ env.DOCKER_VERSION }}
 
       - name: Upload artifact
+        if: steps.cache-writerside.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: firework-docs
