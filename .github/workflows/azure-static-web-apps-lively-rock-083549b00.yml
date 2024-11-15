@@ -48,13 +48,13 @@ jobs:
     needs: build
     steps:
       - name: Download artifact
+        id: download
         uses: actions/download-artifact@v4
         with:
           name: firework-docs
-          path: dist.zip
 
       - name: Unzip artifact
-        run: unzip -O UTF-8 -qq dist.zip -d dist
+        run: unzip -O UTF-8 -qq ${{ steps.download.outputs.download-path }} -d dist
 
       - name: Build And Deploy
         id: builddeploy
