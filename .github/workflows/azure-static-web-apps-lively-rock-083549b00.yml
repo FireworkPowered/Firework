@@ -22,64 +22,26 @@ env:
   DOCKER_VERSION: "243.21565"
 
 jobs:
-  build:
+  build-and-deploy:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    name: Build and Deploy to Azure
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Cache Writerside build
-        id: cache-writerside
-        uses: actions/cache@v4
-        with:
-          path: |
-            artifacts/${{ env.ARTIFACT }}
-          key: ${{ runner.os }}-writerside-${{ hashFiles('docs/**') }}
-          restore-keys: |
-            ${{ runner.os }}-writerside-
-
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        # Ignore the failure of a step and avoid terminating the job.
-        continue-on-error: true
 
       - name: chdir docs
         run: cd docs
 
       - name: Build docs using Writerside Docker builder
-        if: steps.cache-writerside.outputs.cache-hit != 'true'
         uses: JetBrains/writerside-github-action@v4
         with:
           instance: ${{ env.INSTANCE }}
           artifact: ${{ env.ARTIFACT }}
           docker-version: ${{ env.DOCKER_VERSION }}
 
-      - name: Upload artifact
-        if: steps.cache-writerside.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: firework-docs
-          path: artifacts/${{ env.ARTIFACT }}
-          retention-days: 7
-
-  deploy:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
-    runs-on: ubuntu-latest
-    name: Deploy on Azure Static Web Apps
-    needs: build
-    steps:
-      - name: Download artifact
-        id: download
-        uses: actions/download-artifact@v4
-        with:
-          name: firework-docs
-
-      - run: ls -R ${{ steps.download.outputs.download-path }}
-
       - name: Unzip artifact
-        run: unzip -O UTF-8 -qq ${{ steps.download.outputs.download-path }}/${{ env.ARTIFACT }} -d dist
+        run: unzip -O UTF-8 -qq artifacts/${{ env.ARTIFACT }} -d dist
 
       - name: Build And Deploy
         id: builddeploy
