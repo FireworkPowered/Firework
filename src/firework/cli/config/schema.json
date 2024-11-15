@@ -59,7 +59,9 @@
                     "type": "string"
                 },
                 "type": {
-                    "type": "string",
+                    "enum": [
+                        "entrypoint"
+                    ],
                     "default": "entrypoint"
                 }
             },
