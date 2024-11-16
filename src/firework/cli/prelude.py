@@ -7,32 +7,25 @@ if TYPE_CHECKING:
 
 
 def plugin(core: CliCore):
-    def aiohttp_client():
+    def aiohttp_client(_):
         from firework.bootstrap.external.aiohttp import AiohttpClient
 
         return AiohttpClient()
 
     core.add_service_integrate("aiohttp.client", aiohttp_client)
 
-    def asgi_server_uvicorn():
+    def asgi_server_uvicorn(_):
         from firework.bootstrap.external.asgi import UvicornASGIService
 
-        return UvicornASGIService("127.0.0.1", 8080)  # TODO: config
+        return UvicornASGIService()
 
     core.add_service_integrate("asgi.server.uvicorn", asgi_server_uvicorn)
 
-    def memcache():
+    def memcache(_):
         from firework.bootstrap.external.memcache import MemcacheService
 
         return MemcacheService()
 
     core.add_service_integrate("memcache", memcache)
-
-    def config_load():
-        from firework.bootstrap.external.config import ConfigLoadSerice
-
-        return ConfigLoadSerice()
-
-    core.add_service_integrate("firework.config", config_load)
 
     # TODO: add more integrations
