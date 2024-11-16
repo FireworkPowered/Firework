@@ -47,20 +47,19 @@ async def _empty_asgi_handler(scope, receive, send):
 
 class _LoguruHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
+        level: str | int
         try:
             level = logger.level(record.levelname).name
         except ValueError:
-            level = str(record.levelno)
+            level = record.levelno
 
-        frame, depth = logging.currentframe(), 2
-        while frame and frame.f_code.co_filename == logging.__file__:
+        # Find caller from where originated the logged message.
+        frame, depth = logging.currentframe(), 0
+        while frame and (depth == 0 or frame.f_code.co_filename == logging.__file__):
             frame = frame.f_back
             depth += 1
 
-        logger.opt(depth=depth, exception=record.exc_info).log(
-            level,
-            record.getMessage(),
-        )
+        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 
 class _Server(Server):
@@ -101,15 +100,7 @@ class DispatcherMiddleware:
         tasks = []
         try:
             for path, app in self.mounts.items():
-                tasks.append(
-                    asyncio.create_task(
-                        app(
-                            scope,
-                            self.app_queues[path].get,
-                            functools.partial(self.send, path, send),  # type: ignore
-                        )
-                    )
-                )
+                tasks.append(asyncio.create_task(app(scope, self.app_queues[path].get, functools.partial(self.send, path, send))))
 
             while True:
                 message = await receive()
