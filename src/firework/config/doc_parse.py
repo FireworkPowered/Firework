@@ -19,7 +19,7 @@ def cleanup_src(src: str) -> str:
 
 def store_field_description(cls: type, fields: dict[str, Field]) -> None:
     try:
-        node: ast.ClassDef = cast(ast.ClassDef, ast.parse(cleanup_src(inspect.getsource(cls))).body[0])
+        node = cast(ast.ClassDef, ast.parse(cleanup_src(inspect.getsource(cls))).body[0])
     except (TypeError, OSError):  # NOTE: for REPL.
         logger.error(f"Unable to store description for {cls.__qualname__}, maybe the source file is not reachable.")
         return

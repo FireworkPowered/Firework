@@ -3,10 +3,7 @@ from __future__ import annotations
 import enum
 import re
 from dataclasses import dataclass
-from pathlib import Path
-from typing import cast
-
-from typing_extensions import TypedDict
+from typing import TypedDict, cast
 
 _LIG = r"[A-Za-z0-9_-]"
 _L_REP = rf"({_LIG}+\.)*"
@@ -64,7 +61,7 @@ class PathSpec:
         ext_ind = fills.index(PathFill.EXTEND)
         return ext_ind, len(fills) - ext_ind - 1
 
-    def format(self, parts: list[str]) -> FormattedPath | None:
+    def format(self, parts: list[str]) -> DestWithMount | None:
         front_len, back_len = self.fill_lens
         front = parts[:front_len]
         back = parts[front_len:][-back_len or len(parts) :]
@@ -85,20 +82,13 @@ class PathSpec:
                 fmt_sect.extend(ext)
             else:
                 fmt_sect.append(next(formatted_it) if p is PathFill.SINGLE else p)
-        return FormattedPath(Path("/".join(fmt_path)), fmt_sect)  # Allow absolute path
+        return DestWithMount("/".join(fmt_path), tuple(fmt_sect))  # Allow absolute path
 
 
 @dataclass
-class FormattedPath:
-    path: Path
-    mount_dest: list[str]
-
-    def __post_init__(self) -> None:
-        if not self.path.suffix:
-            self.path = self.path.with_suffix(".json5")  # TODO: Config
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.touch(exist_ok=True)
-        self.path = self.path.resolve()
+class DestWithMount:
+    dest: str
+    mount: tuple[str, ...]
 
 
 def parse_path(spec: str) -> PathSpec:

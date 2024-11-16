@@ -34,15 +34,12 @@ import enum
 import inspect
 import numbers
 import re
-import sys
-import types
 import typing as t
-from abc import ABC
 
 import typing_extensions as t_e
 
-# Kayaku only.
 from .doc_parse import store_field_description
+from .utils import Unions
 
 _MISSING = dataclasses.MISSING
 
@@ -76,6 +73,10 @@ SCHEMA_ANNO_KEY_MAP = {
     "max_items": "maxItems",
     "unique_items": "uniqueItems",
 }
+
+
+class EmptyTypedDict(t.TypedDict):
+    pass
 
 
 @dataclasses.dataclass(frozen=True)
@@ -113,12 +114,9 @@ class ContainerSchema(Schema):
     unique_items: t.Optional[bool] = None
 
 
-class ConfigModel(ABC):
+@t.runtime_checkable
+class DataClass(t.Protocol):
     __dataclass_fields__: t.ClassVar[t.Dict[str, dataclasses.Field]]
-
-    @classmethod
-    def __subclasshook__(cls, oth):
-        return isinstance(oth, type) and dataclasses.is_dataclass(oth)
 
 
 def is_sub_type(sub: t.Any, parent: t.Any) -> bool:
@@ -126,11 +124,8 @@ def is_sub_type(sub: t.Any, parent: t.Any) -> bool:
     return isinstance(sub_origin, type) and issubclass(sub_origin, parent) or sub_origin == parent
 
 
-Unions = (t.Union,) if sys.version_info < (3, 10) else (t.Union, types.UnionType)
-
-
 class SchemaGenerator:
-    def __init__(self, dc: t.Type[ConfigModel] | None = None) -> None:
+    def __init__(self, dc: t.Type[DataClass] | None = None) -> None:
         self.root = dc
         self.seen_root = False
         self.defs = {}
@@ -145,7 +140,7 @@ class SchemaGenerator:
         return description
 
     @classmethod
-    def from_dc(cls, dc: t.Type[ConfigModel]) -> dict[str, t.Any]:
+    def from_dc(cls, dc: t.Type[DataClass]) -> dict[str, t.Any]:
         generator = cls(dc)
         schema = generator.get_dc_schema(dc)
         if generator.defs:
@@ -156,7 +151,7 @@ class SchemaGenerator:
             **schema,
         }
 
-    def get_dc_schema(self, dc: t.Type[ConfigModel]) -> dict[str, t.Any]:
+    def get_dc_schema(self, dc: t.Type[DataClass]) -> dict[str, t.Any]:
         if dc == self.root:
             if self.seen_root:
                 return {"$ref": "#"}
@@ -171,7 +166,7 @@ class SchemaGenerator:
                 "$ref": f"#/$defs/{name}",
             }
 
-    def create_dc_schema(self, dc: t.Type[ConfigModel]):
+    def create_dc_schema(self, dc: t.Type[DataClass]):
         schema = {
             "type": "object",
             "title": self.retrieve_title(dc),
@@ -186,7 +181,7 @@ class SchemaGenerator:
         ):
             schema["description"] = dc.__doc__
         for field in dataclasses.fields(dc):
-            typ = type_hints[field.name]
+            typ: t.Any = type_hints[field.name]
             if (f_description := field.metadata.get("description")) is not None:
                 f_a: Schema
                 base, f_a = t_e.get_args(typ) if t_e.get_origin(typ) == t_e.Annotated else (typ, Schema())
@@ -197,7 +192,7 @@ class SchemaGenerator:
                         self.format_docstring_description(field, f_description),
                     )
                 typ = t_e.Annotated[base, f_a]
-            schema["properties"][field.name] = self.get_field_schema(typ, field.default)  # type: ignore
+            schema["properties"][field.name] = self.get_field_schema(typ, field.default)
             field_is_optional = field.default is not _MISSING or field.default_factory is not _MISSING
             if not field_is_optional:
                 schema["required"].append(field.name)
@@ -236,7 +231,7 @@ class SchemaGenerator:
             return self.get_literal_schema(typ, default)
         elif t_e.get_origin(typ) == t_e.Annotated:
             return self.get_annotated_schema(typ, default)
-        elif t_e.is_typeddict(typ):
+        elif t.is_typeddict(typ) or t_e.is_typeddict(typ):
             return self.get_typed_dict_schema(typ)
         elif is_sub_type(typ, dict):
             return self.get_dict_schema(typ)
@@ -286,7 +281,7 @@ class SchemaGenerator:
         else:
             return {"type": "object"}
 
-    def get_typed_dict_schema(self, typ: type[t.TypedDict]):  # type: ignore
+    def get_typed_dict_schema(self, typ: type[EmptyTypedDict]):
         fields: list[tuple[str, t.Any]] = []
         required: list[str] = []  # Python 3.8- don't have `__required_keys__`
         for name, anno in t_e.get_type_hints(typ, include_extras=True).items():
@@ -306,7 +301,7 @@ class SchemaGenerator:
                     (anno if schema_anno is None else t_e.Annotated[anno, schema_anno]),
                 )
             )
-        dc: type[ConfigModel] = t.cast(t.Type[ConfigModel], dataclasses.make_dataclass(typ.__qualname__, fields))
+        dc: type[DataClass] = t.cast(t.Type[DataClass], dataclasses.make_dataclass(typ.__qualname__, fields))
         dc.__module__ = typ.__module__
         store_field_description(typ, dc.__dataclass_fields__)
         dc_schema = self.get_dc_schema(dc)
@@ -434,7 +429,7 @@ class SchemaGenerator:
         return {"type": "string", "format": "regex"}
 
 
-def write_schema_ref(root: dict, sect: tuple[str, ...], name: str) -> None:
+def update_schema_ref(root: dict, sect: tuple[str, ...], name: str) -> None:
     for s in sect:
         root["type"] = "object"
         required: list[str] = root.setdefault("required", [])
