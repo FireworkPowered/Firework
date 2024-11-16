@@ -1,0 +1,33 @@
+# filework.toml is the configuration file for the Firework CLI, formatted in TOML.
+# Comments are denoted by `#`, delete them if you want.
+
+[deployment]
+# Deployment, specially, is a file system abstraction that allows application to store and retrieve files
+# Like database files, configuration files, static assets files, etc.
+# Deployment contains files that are necessary for the application to run.
+# Deployment also contains metadata for the framework layer to operate on.
+# for detailed, see [docs](https://firework.majoium.com).
+
+# The root directory for the deployment
+root = ".firework"
+
+[config.sources]
+# Configuration sources are the sources that the application will use to load configuration files.
+# See [docs](https://firework.majoium.com) for more information.
+
+"{**}" = ".firework/config/{**}"
+
+# [[services]] is a list of services that the application will use.
+# For example, configure a memcache, this is required by many firework components, so it's added by default.
+[[services]]
+entrypoint = "memcache"
+
+# For example, configure a uvicorn server.
+# [[services]]
+# entrypoint = "asgi.server.uvicorn"
+
+# ...or a `aiohttp.ClientSession` daemon, which serves a instance of `aiohttp.ClientSession`.
+# [[services]]
+# entrypoint = "aiohttp.client"
+
+# For more information, see [docs](https://firework.majoium.com).

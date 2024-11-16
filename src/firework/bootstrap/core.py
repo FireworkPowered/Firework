@@ -216,8 +216,8 @@ class Bootstrap:
 
             try:
                 if not failed:
+                    logger.success("Service startup complete, Ctrl-C to exit application.", style="green bold")
                     await self.task_group.wait()
-
             finally:
                 await offline_callback()
 
