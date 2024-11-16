@@ -3,11 +3,13 @@ from __future__ import annotations
 import asyncio
 import functools
 import logging
+from dataclasses import dataclass
 from typing import Callable, TypeVar
 
 from loguru import logger
 
 from firework.bootstrap import Service, ServiceContext
+from firework.config.manager import ConfigManager
 from firework.util import any_completed
 
 try:
@@ -129,33 +131,41 @@ class DispatcherMiddleware:
                 await send({"type": "lifespan.shutdown.complete"})
 
 
+@dataclass
+class UvicornServerConfig:
+    host: str
+    port: int
+
+
 class UvicornASGIService(Service):
     id = "asgi.server.uvicorn"
 
     middleware: DispatcherMiddleware
-    host: str
-    port: int
 
-    def __init__(self, host: str, port: int, mounts: dict[str, Callable] | None = None):
-        self.host = host
-        self.port = port
+    def __init__(self, mounts: dict[str, Callable] | None = None):
         self.middleware = DispatcherMiddleware(mounts or {"\0\0\0": _empty_asgi_handler})
 
     async def launch(self, context: ServiceContext) -> None:
         async with context.prepare():
-            self.server = _Server(Config(self.middleware, host=self.host, port=self.port, factory=False))
+            # load config
+            config_manager = ConfigManager.current()
+            config_manager.load({"asgi.server.uvicorn": UvicornServerConfig})
+            config = config_manager.get(UvicornServerConfig)
 
+            # init server
+            self.server = _Server(Config(self.middleware, host=config.host, port=config.port, factory=False))
+
+            # patch uvicorn logging
             level = logging.getLevelName(20)  # default level for uvicorn
-            logging.basicConfig(handlers=[_LoguruHandler()], level=level)
             PATCHES = ["uvicorn.error", "uvicorn.asgi", "uvicorn.access", ""]
             for name in PATCHES:
                 target = logging.getLogger(name)
                 target.handlers = [_LoguruHandler(level=level)]
                 target.propagate = False
 
-            serve_task = asyncio.create_task(self.server.serve())
-
         async with context.online():
+            # create uvicorn serve task
+            serve_task = asyncio.create_task(self.server.serve())
             await any_completed([serve_task, context.wait_for_sigexit()])
 
         async with context.cleanup():
