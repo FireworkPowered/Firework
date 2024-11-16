@@ -10,13 +10,43 @@ Firework 通常被视为*平行世界的 Graia Project*，与主世界的 Graia 
 
 Firework 的主仓库分发名为 `firework.spark` 的 PyPI 包，这个包将 Firework 整合和深度相互集成的工具链一次性完整的交付到用户手中。Firework 以此鼓励各个组件之间建立深入的集成，以此提升整体的开发效率。
 
+
+## 克隆仓库后的第一步
+
+Firework 仓库使用并依赖于 PDM 进行各式各种工作，请先通过 `pip`、`pipx` 或 `uv` 安装 PDM，然后在仓库根目录运行 `pdm install -d` 安装开发依赖。我们不建议启用 PDM 的 PEP 517 模式，这可能会对 Firework 依赖的 Entry Point 机制造成影响（未定义行为），但目前还未测试过这方面。
+
+```sh
+pdm install -d
+```
+
+我们强制使用 `pre-commit` 进行代码风格检查，因此请在克隆仓库后运行 `pre-commit install` 安装 `pre-commit` 钩子。如果未安装 `pre-commit`，请先安装 `pre-commit`。
+
+```sh
+pip install pre-commit
+pre-commit install
+```
+
+如果你需要围绕 Firework 的可选依赖组（Optional Dependency Group）进行开发，可以使用 `pdm install -g <group>` 安装对应的依赖组。例如，如果你需要围绕 `firework.bootstrap.external.aiohttp` 进行开发，可以使用以下命令安装 `aiohttp` 的依赖：
+
+```sh
+pdm install -d -G aiohttp
+```
+
+对 `uvicorn` 等如法炮制，你可以一次指定多个依赖组，只需要将其用逗号（`,`）分割开来。
+
+```sh
+pdm install -d -G aiohttp,uvicorn
+```
+
+关于 PDM 如何处理可选依赖组，请转到 [PDM 文档](https://pdm-project.org/en/latest/reference/pep621/#optional-dependencies) 查看更多信息。
+
 ## 代码风格
 
 Firework 仓库使用 ruff 进行通用检查与格式化，这一步骤通过配置了的 `pre-commit` 进行。此外，Firework 仓库推行激进的类型注解（Type Annotation）策略，要求代码应尽可能的在使用 Pyright 的 `standard` 或 `basic` 检查模式下通过检查，如果实在无法用类型描述这部分的逻辑或认为不值得，可以使用 `# type: ignore` 或 `# noqa` 静默警告或错误。
 
 ## Commit Message 规范
 
-Firework 采取部分 Google Angular 规范，要求提交中必须包含一个 Header 和一个 Body，Header 与 Angular 规范相同，Body 可以且常常被省略。Header 与 Body 之间用一个空行分隔。
+Firework 采取部分 Google Angular 规范，要求提交中包含 Header 和可选的 Body，Header 与 Angular 规范相同，Body 则常常被省略。Header 与 Body 之间需用一个空行分隔。
 
 Header 的格式为：
 
@@ -47,37 +77,13 @@ Header 的格式为：
 - `lab`: 新增或修改 Lab 脚本；
 - `test`: 对测试的更改，建议用 `test/<scope>` 格式以描述对象为特定模块或范畴；
 - `workflow`: 对 `.github/workflows` 的更改；
+- `pre-commit`: 对 `.pre-commit-config.yaml` 的更改；
 
 `<subject>` 为提交的简短描述，强烈建议使用主动语态，适当采取缩写，例如 `impl` 代替 `implement(s)` 等。
 
+通过在冒号前加上半角感叹号 `!` 可以将提交标记为破坏性变更，例如 `refactor(cli)!: config`。
+
 对 Body 没有要求，可以自由发挥。
-
-## 克隆仓库后的第一步
-
-Firework 仓库使用并依赖于 PDM 进行各式各种工作，请先通过 `pip`、`pipx` 或 `uv` 安装 PDM，然后在仓库根目录运行 `pdm install -d` 安装开发依赖。我们不建议启用 PDM 的 PEP 517 模式，这可能会对 Firework 依赖的 Entry Point 机制造成影响（未定义行为），但目前还未测试过这方面。
-
-```sh
-pdm install -d
-```
-
-我们强制使用 `pre-commit` 进行代码风格检查，因此请在克隆仓库后运行 `pre-commit install` 安装 `pre-commit` 钩子。如果未安装 `pre-commit`，请先安装 `pre-commit`。
-
-```sh
-pip install pre-commit
-pre-commit install
-```
-
-如果你需要围绕 Firework 的可选依赖组（Optional Dependency Group）进行开发，可以使用 `pdm install -g <group>` 安装对应的依赖组。例如，如果你需要围绕 `firework.bootstrap.external.aiohttp`，可以使用以下命令安装 `aiohttp` 的依赖：
-
-```sh
-pdm install -d -G aiohttp
-```
-
-对 `uvicorn` 等如法炮制，你可以一次指定多个依赖组，只需要将其用逗号（`,`）分割开来。
-
-```sh
-pdm install -d -G aiohttp,uvicorn
-```
 
 ## 测试 (Lab)
 
@@ -95,5 +101,5 @@ Firework 仓库使用 JetBrains 提供的 Writerside 工具编写文档并构建
 
 ## CI/CD
 
-Firework 目前不采用 CI/CD 来检查代码或是运行测试，仅用于构建并托管文档。我们计划在未来引入 CI/CD 来检查代码风格、运行测试等。
+Firework 目前不采用 CI/CD 来检查代码或是运行测试，而仅用于构建并托管文档。我们计划在未来引入 CI/CD 来检查代码风格、运行测试等。
 
