@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import argparse
 from contextlib import contextmanager
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from firework.bootstrap import Bootstrap
-from firework.config import initialize
+from firework.config.manager import ConfigManager
+from firework.globals import CONFIG_MANAGER_CONTEXT
+from firework.util._cvar import cvar
 
 from ..base import Command
 from ..config import LumaConfig
@@ -13,6 +15,9 @@ from ..core import CliCore
 from ..exceptions import LumaConfigError
 from ..term import UI
 from ..util import ensure_config, load_from_string
+
+if TYPE_CHECKING:
+    from firework.bootstrap.service import Service
 
 
 def plugin(core: CliCore):
@@ -67,10 +72,10 @@ class RunCommand(Command):
             for pre_fn in run_hook_target.pre:
                 pre_fn(core, runtime_ctx)
 
-        initialize(config.config.sources)
+        config_manager = ConfigManager(config.config.sources)
 
         # collect services
-        services = []
+        services: list[Service] = []
 
         for desc in config.services:
             if desc.type == "entrypoint":
@@ -78,7 +83,7 @@ class RunCommand(Command):
                 if factory is None:
                     raise LumaConfigError(f"Service entrypoint {desc.entrypoint} is not registered!")
 
-                services.append(factory())
+                services.append(factory(core))
             elif desc.type == "custom":
                 services.append(load_from_string(desc.module)())
             else:
@@ -88,12 +93,13 @@ class RunCommand(Command):
             core.ui.echo("[error]No services are configured, so nothing will happen.", err=True)
             return
 
-        bootstrap = Bootstrap()
-        bootstrap.add_initial_services(*services)
+        with cvar(CONFIG_MANAGER_CONTEXT, config_manager):
+            bootstrap = Bootstrap()
+            bootstrap.add_initial_services(*services)
 
-        try:
-            bootstrap.launch_blocking()
-        finally:
-            if run_hook_target is not None:
-                for post_fn in run_hook_target.post:
-                    post_fn(core, runtime_ctx)
+            try:
+                bootstrap.launch_blocking()
+            finally:
+                if run_hook_target is not None:
+                    for post_fn in run_hook_target.post:
+                        post_fn(core, runtime_ctx)

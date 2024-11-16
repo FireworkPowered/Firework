@@ -17,7 +17,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
 import importlib_metadata as pkg_meta
-from rich.traceback import Traceback
 from typing_extensions import Self
 
 from . import term
@@ -45,7 +44,7 @@ class CliCore:
         self.version: str = pkg_meta.version("firework-spark") or "development"
         self.hooks: HookManager = HookManager(self.ui)
         self.component_handlers: dict[str, Callable[[Self, dict[str, Any]], None]] = {}
-        self.service_integrates: dict[str, Callable[[], Service]] = {}
+        self.service_integrates: dict[str, Callable[[CliCore], Service]] = {}
         self.called_components: set[str] = set()
         self._tweak_parser()
         self._load_plugins()
@@ -159,9 +158,9 @@ class CliCore:
             if not callable(hook_fn):
                 self.ui.echo(f"[error][info]{hook.endpoint}[/info] is not callable, skipping", err=True)
                 continue
-            self.hooks.add_hook(hook.target, load_from_string(hook.endpoint))
+            self.hooks.add_hook(hook.target, hook_fn)
 
-    def add_service_integrate(self, entrypoint: str, integrate: Callable[[], Service]):
+    def add_service_integrate(self, entrypoint: str, integrate: Callable[[CliCore], Service]):
         self.service_integrates[entrypoint] = integrate
 
     def main(self, args: list[str] | None) -> None:
@@ -189,7 +188,11 @@ class CliCore:
         except Exception as exc:
             should_show_tb = not isinstance(exc, LumaError)
             if self.ui.verbosity > term.Verbosity.NORMAL and should_show_tb:
-                self.ui.echo(Traceback(), err=True)
+                import traceback
+
+                traceback.print_exc()
+
+                # self.ui.echo(Traceback(), err=True)
                 sys.exit(1)
             self.ui.echo(rf"[error]\[{exc.__class__.__name__}][/]: {exc}", err=True)
             if should_show_tb:

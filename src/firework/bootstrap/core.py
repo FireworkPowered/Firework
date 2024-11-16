@@ -222,7 +222,8 @@ class Bootstrap:
                 await offline_callback()
 
                 if failed:
-                    raise BaseExceptionGroup("service cleanup failed", [i.exception() or UnhandledExit() for i in failed])
+                    exceptions = [i.exception() or UnhandledExit() for i in failed]
+                    raise BaseExceptionGroup("service cleanup failed", exceptions)
 
     def launch_blocking(
         self,
