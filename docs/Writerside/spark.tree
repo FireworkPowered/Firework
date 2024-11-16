@@ -4,7 +4,11 @@
 
 <instance-profile id="spark"
                  name="Firework"
-                 start-page="starter-topic.md">
+                 start-page="Firework.md">
 
-    <toc-element topic="starter-topic.md"/>
+    <toc-element topic="starter-topic.md">
+    </toc-element>
+    <toc-element topic="Firework.md">
+        <toc-element topic="Development.md"/>
+    </toc-element>
 </instance-profile>
