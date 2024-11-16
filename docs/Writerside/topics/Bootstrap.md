@@ -142,3 +142,10 @@ bs.remove_initial_services(service)
 bs.add_initial_services(service)
 bs.launch_blocking()
 ```
+
+## 总结
+
+Bootstrap 在 Firework 中主要随 `firework run` 启动，其他子系统只构造 Service 并将状态托管其上。
+
+`firework run` 负责从 `firework.toml` 中读取配置，使用辅助函数构造服务实例并托管给 Bootstrap。
+除此之外还负责初始化 `firework.config` 子系统，具体的详情请参考其他文档。
