@@ -2,27 +2,46 @@ from __future__ import annotations
 
 import enum
 import re
-import sys
 import types
-from dataclasses import field, fields
+from collections.abc import Sequence
+from dataclasses import Field, field, fields
 from datetime import date, datetime, time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Sequence, TypeVar, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Protocol,
+    TypedDict,
+    TypeVar,
+    Union,
+    get_origin,
+    runtime_checkable,
+)
 
 import typing_extensions
 from dacite.config import Config
 from dacite.core import from_dict as _from_dict
 
 from .json5_backend.types import Array, JContainer, JObject, JType, JWrapper, convert
-from .schema_gen import DataClass
+
+
+class EmptyTypedDict(TypedDict):
+    pass
+
+
+@runtime_checkable
+class DataClass(Protocol):
+    __dataclass_fields__: ClassVar[dict[str, Field]]
+
+
+def is_sub_type(sub: Any, parent: Any) -> bool:
+    sub_origin = get_origin(sub) or sub
+    return isinstance(sub_origin, type) and issubclass(sub_origin, parent) or sub_origin == parent
+
 
 DC_T = TypeVar("DC_T", bound=DataClass)
 T = TypeVar("T")
-
-Unions = (Union, typing_extensions.Union)
-
-if sys.version_info >= (3, 10):
-    Unions += (types.UnionType,)
 
 
 def copy_meta(src: Any, dst: JType):
@@ -35,11 +54,11 @@ def copy_meta(src: Any, dst: JType):
 def _update_array(container: Array, data: list):
     for i in range(len(container)):
         val = container[i]
-        if isinstance(val, (DataClass, dict)):
+        if isinstance(val, DataClass | dict):
             new_container = JObject()
             update(new_container, val, delete=True)
             val = new_container
-        elif isinstance(val, (re.Pattern, date, datetime, time)):
+        elif isinstance(val, re.Pattern | date | datetime | time):
             val = convert(val.pattern if isinstance(val, re.Pattern) else val.isoformat())
         elif isinstance(val, enum.Enum):
             val = convert(val.value)
@@ -66,11 +85,11 @@ def update(container: JObject, data: DataClass | dict, delete: bool = False):
         k = convert(k)
         to_be_popped.discard(k)
         origin_v = container.get(k, None)
-        if isinstance(v, (DataClass, dict)):
+        if isinstance(v, DataClass | dict):
             new_v = container.setdefault(k, JObject())
             update(new_v, v, delete=True)
             v = new_v
-        elif isinstance(v, (re.Pattern, date, datetime, time)):
+        elif isinstance(v, re.Pattern | date | datetime | time):
             v = convert(v.pattern if isinstance(v, re.Pattern) else v.isoformat())
         elif isinstance(v, enum.Enum):
             v = convert(v.value)
@@ -84,6 +103,9 @@ def update(container: JObject, data: DataClass | dict, delete: bool = False):
         container[k] = v
     for k in to_be_popped:
         container.pop(k, None)
+
+
+Unions = {Union, typing_extensions.Union, types.UnionType}
 
 
 class _KayakuDaciteTypeHook(dict):

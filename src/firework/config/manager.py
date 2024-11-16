@@ -4,6 +4,8 @@ from dataclasses import fields as get_fields
 from pathlib import Path
 from typing import Any, Callable, Literal, TypeAlias, TypeVar, overload
 
+from firework.globals import CONFIG_MANAGER_CONTEXT
+
 from .bi_tree import Prefix
 from .format import format_with_model
 from .json5_backend import dumps, loads
@@ -73,8 +75,8 @@ class _KayakuCore:
         path = to_path(path_info.dest, "." + self.file_suffix)
         mount = path_info.mount
         file_store = self.files.setdefault(path, _FileEntry(self.get_schema_generator(None)))
-        for f in get_fields(cls):
-            sub_dest: MountIdent = mount + (f.name,)
+        for dc_field in get_fields(cls):
+            sub_dest: MountIdent = mount + (dc_field.name,)
             if sub_dest in file_store.mount_record:
                 raise NameError(f"{path.with_suffix('').as_posix()}::{'.'.join(sub_dest)} is occupied!")
             file_store.mount_record.add(sub_dest)
@@ -103,12 +105,12 @@ class _KayakuCore:
         self.bootstrap(paths)
 
     def bootstrap_file(self, path: Path, store: _FileEntry) -> None:
+        touch_path(path)
         path.with_suffix(".schema.json").write_text(dumps(store.get_schema()), encoding="utf-8")
         exceptions = []
         if path.exists() and (text := path.read_text(encoding="utf-8")):
             document = loads(text)
         else:
-            touch_path(path)
             document = loads("{}")
         for mount, domains in store.mount.items():
             container = document
@@ -154,7 +156,7 @@ JSON5_PRETTIFIER = Prettifier(trail_comma=True, key_quote=False, string_quote=Qu
 DC_T = TypeVar("DC_T", bound=DataClass)
 
 
-class Kayaku:
+class ConfigManager:
     """配置管理器。
 
     Example:
@@ -206,6 +208,10 @@ class Kayaku:
                 exceptions.append(e)
         if exceptions:
             raise ExceptionGroup(f"{len(exceptions)} occurred during spec initialization", exceptions)
+
+    @staticmethod
+    def current():
+        return CONFIG_MANAGER_CONTEXT.get()
 
     def load(self, domain_map: dict[str, type[DataClass]]) -> None:
         """加载配置类。"""
