@@ -206,12 +206,10 @@ class Bootstrap:
         if not self.initial_services:
             raise ValueError("No services to launch.")
 
-        self.services.update(self.initial_services)
-
         with cvar(BOOTSTRAP_CONTEXT, self):
             failed = []
 
-            online_dispatch = await self.start_lifespan(self.services.values(), failed_record=failed, rollback=True)
+            online_dispatch = await self.start_lifespan(self.initial_services.values(), failed_record=failed, rollback=True)
             offline_callback = online_dispatch()
 
             try:
