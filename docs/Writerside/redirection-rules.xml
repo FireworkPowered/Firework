@@ -6,4 +6,12 @@
         <accepts>page.html</accepts>
     </rule>
     -->
+    <rule id="751c5996">
+        <description>Created after removal of "Starter Topic" from Firework</description>
+        <accepts>starter-topic.html</accepts>
+    </rule>
+    <rule id="103420d8">
+        <description>Created after removal of "CLI" from Firework</description>
+        <accepts>CLI.html</accepts>
+    </rule>
 </rules>

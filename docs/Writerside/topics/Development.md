@@ -6,9 +6,9 @@ Firework 目前仍处于激进的更新与迭代阶段，本 Topic 及其子 Top
 
 ## 代码库理念
 
-Firework 通常被视为*平行世界的 Graia Project*，与主世界的 Graia Project 有所不同的是，Firework 不鼓励将组件分开为多个仓库，如 [launart](https://github.com/GraiaProject/launart) 在 Firework 仓库中被集成为 `firework.bootstrap` 组件，并在 `firework.bootstrap.external` 中提供对各式组件的集成，如 uvicorn 等。后者在一定程度上取代了原先的 [Amnesia](https://github.com/GraiaProject/Amnesia)。在 [Avilla](https://github.com/GraiaProject/Avilla) 中，Avilla 使用了 [Mina](https://github.com/GreyElaina/Mina) 将模块分为多个包进行分发，而 Firework 则反其道而行之，鼓励一次性的装载所有组件。
+Firework 通常被视为*平行世界的 Graia Project*，与主世界的 Graia Project 有所不同的是，Firework 不鼓励将组件分开为多个仓库，如 [launart](https://github.com/GraiaProject/launart) 在 Firework 仓库中被集成为 `firework.bootstrap` 组件，并在 `firework.bootstrap.external` 中提供对各式组件的集成，如 uvicorn 等。后者在一定程度上取代了原先的 [Amnesia](https://github.com/GraiaProject/Amnesia)。在 [Avilla](https://github.com/GraiaProject/Avilla) 中，Avilla 使用了 [Mina](https://github.com/GreyElaina/Mina) 将模块分为多个包进行分发，而 Firework 则反其道而行之，鼓励一次性的装载并交付所有组件。
 
-Firework 的主仓库分发名为 `firework.spark` 的 PyPI 包，这个包将 Firework 整合和深度相互集成的工具链一次性完整的交付到用户手中。Firework 以此鼓励各个组件之间建立深入的集成，以此提升整体的开发效率。
+Firework 的主仓库分发名为 `firework-spark` 的 PyPI 包，这个包将 Firework 整合和深度相互集成的工具链一次性完整的交付到用户手中。Firework 以此鼓励各个组件之间建立深入的集成，以此提升整体的开发效率。
 
 
 ## 克隆仓库后的第一步
