@@ -128,3 +128,9 @@ Firework 的代码库中已经包含了 `init`, `run` 等插件， 这些插件�
 ```
 
 如此配置后，你便可以在 VSCode 中使用其调试功能启动 Firework CLI 并运行 `firework run`。
+
+# 修改 `firework.toml`
+
+如果要对 `firework.toml` 的模型类定义进行修改，请参考模块 `firework.cli.config`。
+
+在启动期间，Firework CLI 会使用预先生成的 JSON Schema 文件对 `firework.toml` 进行验证，以确保配置文件的正确性。对模型类定义 `LumaConfig` 的修改并不会立刻生效，你需要运行 `pdm run regenerate-cli-schema` 以重新生成 JSON Schema 文件。
