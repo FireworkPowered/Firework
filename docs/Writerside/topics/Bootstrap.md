@@ -34,6 +34,26 @@ async def launch(self, ctx: ServiceContext):
         ...
 ```
 
+建议在 `prepare` 阶段进行初始化工作，`online` 阶段进行主要工作，`cleanup` 阶段进行清理工作。
+
+`ctx.wait_for_sigexit` 方法和 `ctx.should_exit` 属性可以用于处理退出信号。
+
+```py
+async def launch(self, ctx: ServiceContext):
+    async with ctx.prepare():
+        ...
+        
+    async with ctx.online():
+        while not ctx.should_exit:
+            ...
+        
+        # or
+        await ctx.wait_for_sigexit()
+        
+    async with ctx.cleanup():
+        ...
+```
+
 在完成这一切后，你可以通过 `firework.bootstrap` 提供的 `Bootstrap` 类来启动服务。
 
 ```py
