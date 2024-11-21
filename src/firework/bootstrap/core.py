@@ -220,7 +220,7 @@ class Bootstrap:
                     logger.success("Service startup complete, Ctrl-C to exit application.", style="green bold")
                     await self.task_group.wait()
             finally:
-                await offline_callback()
+                await offline_callback(False)
 
                 if failed:
                     exceptions = [i.exception() or UnhandledExit() for i in failed]
