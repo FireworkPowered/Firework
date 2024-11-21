@@ -91,7 +91,10 @@ class Bootstrap:
             for service in services:
                 self.contexts[service.id].dispatch_online()
 
-            async def _offline():
+            async def _offline(exit: bool = True):
+                if exit:
+                    self._sigexit_trig(services)
+
                 failed_offline = await self.offline(services)
 
                 if failed_record is not None and failed_offline is not None:
