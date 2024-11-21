@@ -268,9 +268,12 @@ class Bootstrap:
             asyncio.set_event_loop(None)
             logger.success("asyncio shutdown complete.", style="green bold")
 
+    def _sigexit_trig(self, services: Iterable[Service]):
+        for service in services:
+            self.contexts[service.id].exit()
+
     def _on_sys_signal(self, launch_task: asyncio.Task):
-        for context in self.contexts.values():
-            context.exit()
+        self._sigexit_trig(self.services.values())
 
         if self.task_group is not None:
             self.task_group.stop()
