@@ -99,8 +99,9 @@ class Bootstrap:
                     if not i.done():
                         self.contexts[i.get_name()].dispatch_online()
 
-                await self._handle_stage_cleanup([self.services[i.get_name()] for i in curr if not i.done()])
-                await self._handle_stage_cleanup([self.services[i.get_name()] for i in done])
+                await self._handle_stage_cleanup(
+                    [self.services[i.get_name()] for i in done] + [self.services[i.get_name()] for i in curr if not i.done()]
+                )
 
                 def _dummy_online():
                     async def _dummy_offline(exit: bool = True):
