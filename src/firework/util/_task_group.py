@@ -40,4 +40,5 @@ class TaskGroup:
                 return await self.main
             except asyncio.CancelledError:
                 if self._stop:
+                    self.main = None
                     return
