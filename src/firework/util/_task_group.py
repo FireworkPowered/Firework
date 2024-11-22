@@ -21,7 +21,7 @@ class TaskGroup:
         self.flush()
 
     def update(self, tasks: Iterable[asyncio.Task | Coroutine]):
-        tasks = [asyncio.create_task(task) if isinstance(task, Coroutine) else task for task in tasks]
+        tasks = [asyncio.create_task(task) if asyncio.iscoroutine(task) else task for task in tasks]
         self.tasks.extend(tasks)
 
         self.flush()
@@ -31,7 +31,7 @@ class TaskGroup:
         for task in tasks:
             self.tasks.remove(task)
 
-        self.flush
+        self.flush()
 
     async def wait(self):
         while True:

@@ -82,10 +82,33 @@ class Bootstrap:
     async def start_lifespan(
         self, services: Iterable[Service], *, rollback: bool = False, failed_record: list[asyncio.Task] | None = None
     ):
-        failed_update = await self._handle_stage_prepare(services, rollback=rollback)
+        failed = await self._handle_stage_prepare(services)
 
-        if failed_record is not None and failed_update is not None:
-            failed_record.extend(failed_update)
+        if failed_record is not None and failed is not None:
+            done, curr = failed
+
+            failed_record.extend([i for i in curr if i.done()])
+
+            if rollback:
+                self.task_group.drop(done)
+
+                for i in done:
+                    self.contexts[i.get_name()].dispatch_online()
+
+                for i in curr:
+                    if not i.done():
+                        self.contexts[i.get_name()].dispatch_online()
+
+                await self._handle_stage_cleanup([self.services[i.get_name()] for i in curr if not i.done()])
+                await self._handle_stage_cleanup([self.services[i.get_name()] for i in done])
+
+                def _dummy_online():
+                    async def _dummy_offline(exit: bool = True):
+                        pass
+
+                    return _dummy_offline
+
+                return _dummy_online
 
         def _online():
             for service in services:
@@ -102,15 +125,13 @@ class Bootstrap:
         return _online
 
     async def _service_daemon(self, service: Service, context: ServiceContext):
-        try:
-            await service.launch(context)
-        finally:
-            context.exit_complete()
+        await service.launch(context)
+        context.exit_complete()
 
-    async def _handle_stage_prepare(self, services: Iterable[Service], rollback: bool = False):
+    async def _handle_stage_prepare(self, services: Iterable[Service]):
         bind = {service.id: service for service in services}
         resolved = resolve_services_dependency(services, exclude=self.services.keys())
-        previous_tasks = []
+        previous_tasks: list[asyncio.Task] = []
 
         for layer in resolved:
             _services = {i: bind[i] for i in layer}
@@ -124,19 +145,14 @@ class Bootstrap:
             self.daemon_tasks.update(daemon_tasks)
 
             awaiting_daemon_exit = asyncio.create_task(any_completed(daemon_tasks.values()))
-            awaiting_dispatch_ready = unity([i.wait_for(Stage.PREPARE, Phase.WAITING) for i in _contexts.values()])  # awaiting_prepare
+            awaiting_dispatch_ready = asyncio.create_task(
+                unity([i.wait_for(Stage.PREPARE, Phase.WAITING) for i in _contexts.values()])
+            )  # awaiting_prepare
             completed_task, _ = await any_completed([awaiting_daemon_exit, awaiting_dispatch_ready])
 
-            if completed_task is awaiting_daemon_exit:
-                unresolved = [task for task in daemon_tasks.values() if task.done()]
+            if completed_task is awaiting_daemon_exit and not awaiting_dispatch_ready.done():
+                return previous_tasks, daemon_tasks.values()
 
-                if rollback:
-                    await self._handle_stage_cleanup(services)
-                    self.task_group.drop(previous_tasks)
-
-                return unresolved
-
-            # 调度进入 pending.
             for context in _contexts.values():
                 context.dispatch_prepare()
 
@@ -145,16 +161,10 @@ class Bootstrap:
             )
             completed_task, _ = await any_completed([awaiting_prepare, awaiting_daemon_exit])
 
-            if completed_task is awaiting_daemon_exit:
-                completed_daemon = [task for task in daemon_tasks.values() if task.done()]
+            if completed_task is awaiting_daemon_exit and not awaiting_prepare.done():
+                return previous_tasks, daemon_tasks.values()
 
-                if rollback:
-                    await self._handle_stage_cleanup(services)
-                    self.task_group.drop(previous_tasks)
-
-                return completed_daemon
-
-            layer_tasks = [i.wait_for(Stage.ONLINE, Phase.COMPLETED) for i in _contexts.values()]
+            layer_tasks = [asyncio.create_task(i.wait_for(Stage.ONLINE, Phase.COMPLETED)) for i in _contexts.values()]
             self.task_group.update(layer_tasks)
             previous_tasks.extend(layer_tasks)
 
@@ -192,13 +202,13 @@ class Bootstrap:
                 unity([i.wait_for(Stage.CLEANUP, Phase.COMPLETED) for i in _contexts.values()]),  # awaiting_prepare
             )
             completed_task, _ = await any_completed([awaiting_cleanup, awaiting_daemon_exit])
-            await any_completed([awaiting_cleanup, awaiting_daemon_exit])  # complete all tasks
+            await any_completed([awaiting_cleanup, awaiting_daemon_exit])  # update asyncio.Task state
 
             if completed_task is awaiting_daemon_exit and not awaiting_cleanup.done():
                 completed_daemon = [task for task in daemon_tasks if task.done()]
                 return completed_daemon
 
-            await unity([i.wait_for(Stage.EXIT, Phase.COMPLETED) for i in _contexts.values()])
+            await asyncio.gather(*[i.wait_for(Stage.EXIT, Phase.COMPLETED) for i in _contexts.values()])
 
             for target in layer:
                 self.services.pop(target)
