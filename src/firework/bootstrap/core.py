@@ -18,6 +18,13 @@ if TYPE_CHECKING:
     from .service import Service
 
 
+def _dummy_online():
+    async def _dummy_offline(exit: bool = True):
+        pass
+
+    return _dummy_offline
+
+
 def _cancel_alive_tasks(loop: asyncio.AbstractEventLoop):
     to_cancel = asyncio.tasks.all_tasks(loop)
     if to_cancel:
@@ -103,13 +110,7 @@ class Bootstrap:
                     [self.services[i.get_name()] for i in done] + [self.services[i.get_name()] for i in curr if not i.done()]
                 )
 
-                def _dummy_online():
-                    async def _dummy_offline(exit: bool = True):
-                        pass
-
-                    return _dummy_offline
-
-                return _dummy_online
+            return _dummy_online
 
         def _online():
             for service in services:
