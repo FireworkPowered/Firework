@@ -43,6 +43,7 @@ dependencies = [
     "tomlkit>=0.13.2",
     "jsonschema>=4.23.0",
     "dacite>=1.8.1",
+    "prompt-toolkit>=3.0.48",
     # ---
 
     # Launart = <firework.bootstrap>
@@ -60,7 +61,6 @@ dependencies = [
     # Avilla = <firework.framework.core>
     # Credits: Elaina; BlueGlassBlock; ProgramRipper; Tarraint
     # ---
-    "case-converter>=1.1.0"
 ]
 requires-python = ">=3.11"
 readme = "README.md"
