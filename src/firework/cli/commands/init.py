@@ -21,8 +21,6 @@ class InitCommand(Command):
         parser.add_argument("--force", action="store_true", help="Force initialization.")
 
     def handle(self, core: CliCore, options: argparse.Namespace) -> None:
-        core.ui.echo("[primary]Initializing [req]firework.toml")
-
         interactive: bool = not options.non_interactive
         force: bool = options.force
 
@@ -35,6 +33,8 @@ class InitCommand(Command):
                 core.ui.echo("[warning]firework.toml already exists, overwriting.")
             else:
                 raise LumaUsageError("firework.toml already exists.")
+
+        core.ui.echo("[primary]Initializing [req]firework.toml")
 
         file.touch()
         file.write_text(pkg_resources.read_text(__name__, "init_template.toml", "utf-8"))
