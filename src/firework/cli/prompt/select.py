@@ -25,11 +25,14 @@ from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.lexers import SimpleLexer
 from prompt_toolkit.mouse_events import MouseEvent, MouseEventType
 from prompt_toolkit.styles import Style
+from typing_extensions import TypeVar
 
 from .base import BasePrompt
 
+T = TypeVar("T", default=str)
 
-class ListPrompt(BasePrompt[str]):
+
+class SelectPrompt(BasePrompt[T]):
     """RadioList Prompt that supports auto scrolling.
 
     Style class guide:
@@ -56,7 +59,7 @@ class ListPrompt(BasePrompt[str]):
     def __init__(
         self,
         question: str,
-        choices: list[str],
+        choices: list[str] | dict[str, T],
         allow_filter: bool = True,
         default_select: int | None = None,
         *,
@@ -69,7 +72,12 @@ class ListPrompt(BasePrompt[str]):
     ):
         self.question: str = question
         # self.choices: List[Choice[RT]] = choices
-        self.choices = choices
+        # self.choices = choices
+        if isinstance(choices, list):
+            self.choices = {choice: choice for choice in choices}
+        else:
+            self.choices = choices
+
         self.allow_filter: bool = allow_filter
         self.question_mark: str = "[?]" if question_mark is None else question_mark
         self.pointer: str = "❯" if pointer is None else pointer
@@ -216,7 +224,7 @@ class ListPrompt(BasePrompt[str]):
         #     if self._invalid:
         #         return
 
-        self._answered = result
+        self._answered = self.choices[result]  # type: ignore
         # then clear buffer
         self._buffer.reset()
         get_app().exit(result=result)

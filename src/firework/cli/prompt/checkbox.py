@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from functools import lru_cache
 from gettext import gettext as _
-from typing import Any, Callable, List, Set, TypeVar
+from typing import Callable, List, Set
 
 from prompt_toolkit.filters import Condition, is_done
 from prompt_toolkit.formatted_text import AnyFormattedText
@@ -20,13 +20,14 @@ from prompt_toolkit.layout.controls import FormattedTextControl
 from prompt_toolkit.layout.dimension import Dimension
 from prompt_toolkit.mouse_events import MouseEvent, MouseEventType
 from prompt_toolkit.styles import Style
+from typing_extensions import TypeVar
 
 from .base import BasePrompt
 
-RT = TypeVar("RT")
+T = TypeVar("T", default=str)
 
 
-class CheckboxPrompt(BasePrompt[List[Any]]):
+class CheckboxPrompt(BasePrompt[List[T]]):
     """Checkbox Prompt that supports auto scrolling.
 
     Style class guide:
@@ -50,7 +51,7 @@ class CheckboxPrompt(BasePrompt[List[Any]]):
         self,
         question: str,
         # choices: List[Choice[RT]]
-        choices: list[str] | dict[str, Any],
+        choices: list[str] | dict[str, T],
         default_select: List[int] | None = None,
         *,
         question_mark: str | None = None,
@@ -178,7 +179,7 @@ class CheckboxPrompt(BasePrompt[List[Any]]):
             #         return
 
             self._answered = True
-            event.app.exit(result=self._get_result())
+            event.app.exit(result=[self.choices[i] for i in self._get_result()])
 
         @kb.add("c-c", eager=True)
         @kb.add("c-q", eager=True)
@@ -275,7 +276,7 @@ class CheckboxPrompt(BasePrompt[List[Any]]):
         return [("class:error", self.error_message, lambda e: self._reset_error())]
 
     def _get_result(self):
-        return [choice for index, choice in enumerate(self.choices.values()) if index in self._selected]
+        return [choice for index, choice in enumerate(self.choices) if index in self._selected]
 
     @lru_cache
     def _get_mouse_handler(self, index: int | None = None) -> Callable[[MouseEvent], None]:
