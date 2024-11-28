@@ -6,6 +6,15 @@
         "deployment": {
             "$ref": "#/$defs/firework.cli.config.Deployment"
         },
+        "profiles": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
+        },
         "config": {
             "$ref": "#/$defs/firework.cli.config.Config"
         },
@@ -63,6 +72,12 @@
                         "entrypoint"
                     ],
                     "default": "entrypoint"
+                },
+                "group": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             },
             "required": [
@@ -80,6 +95,12 @@
                 },
                 "module": {
                     "type": "string"
+                },
+                "group": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             },
             "required": [

@@ -37,27 +37,16 @@ class RunCommand(Command):
     name = "run"
     description = "Run your bot."
 
+    def add_arguments(self, parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "profile",
+            nargs="?",
+            default="default",
+            help="The profile to run the application with. If not provided, the `default` profile will be used.",
+        )
+
     @ensure_config
     def handle(self, core: CliCore, config: LumaConfig, options: argparse.Namespace) -> None:
-        # require_modules = []
-        # for mod in config.modules:
-        #     if isinstance(mod, SingleModule):
-        #         require_modules.append(mod.endpoint)
-        #         core.ui.echo(f"Adding module [info]{mod.endpoint}[/info]", verbosity=2)
-        #     else:
-        #         iter_pth = [mod.endpoint]
-        #         with suppress(ImportError):
-        #             iter_pth = list(importlib.import_module(mod.endpoint).__path__)
-        #         for mod_info in pkgutil.iter_modules(iter_pth):
-        #             if mod_info.name in mod.exclude:
-        #                 continue
-        #             candidate_name = f"{mod.endpoint}.{mod_info.name}"
-        #             if importlib.util.find_spec(candidate_name) is None:
-        #                 core.ui.echo(f"[warning]{candidate_name} is invalid module, skipping")
-        #                 continue
-        #             require_modules.append(candidate_name)
-        #             core.ui.echo(f"Adding module [info]{candidate_name}[/info]")
-
         runtime_ctx: dict[str, Any] = {}
 
         # Set up runner core
@@ -77,7 +66,10 @@ class RunCommand(Command):
         # collect services
         services: list[Service] = []
 
-        for desc in config.services:
+        if options.profile not in config.profile_services:
+            raise LumaConfigError(f"Profile '{options.profile}' is not defined in the configuration.")
+
+        for desc in config.profile_services[options.profile]:
             if desc.type == "entrypoint":
                 factory = core.service_integrates.get(desc.entrypoint)
                 if factory is None:
@@ -87,7 +79,7 @@ class RunCommand(Command):
             elif desc.type == "custom":
                 services.append(load_from_string(desc.module)())
             else:
-                ...  # unreachable
+                ...
 
         if not services:
             core.ui.echo("[error]No services are configured, so nothing will happen.", err=True)
