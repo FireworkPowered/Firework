@@ -4,9 +4,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-import noneprompt
 import typer
 from typing_extensions import Annotated
+
+from firework.cli.prompt import ListPrompt
 
 
 def main(lab: Annotated[str | None, typer.Argument()] = None):
@@ -16,15 +17,10 @@ def main(lab: Annotated[str | None, typer.Argument()] = None):
         available_labs = [f.stem[4:] for f in lab_folder.glob("lab_*.py")]
 
         try:
-            result = noneprompt.ListPrompt[str](
-                "Choose a lab to run",
-                choices=[noneprompt.Choice(i, i) for i in available_labs],
-            ).prompt()
-        except noneprompt.CancelledError:
+            lab = ListPrompt("Choose a lab to run", choices=available_labs).prompt()
+        except KeyboardInterrupt:
             typer.echo("Cancelled lab execution by user")
             return typer.Exit(1)
-
-        lab = result.data
 
     target = Path.cwd() / "zlab" / f"lab_{lab}.py"
     if not target.exists():
