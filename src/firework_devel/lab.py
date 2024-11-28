@@ -7,7 +7,7 @@ from pathlib import Path
 import typer
 from typing_extensions import Annotated
 
-from firework.cli.prompt import ListPrompt
+from firework.cli.prompt import SelectPrompt
 
 
 def main(lab: Annotated[str | None, typer.Argument()] = None):
@@ -17,7 +17,7 @@ def main(lab: Annotated[str | None, typer.Argument()] = None):
         available_labs = [f.stem[4:] for f in lab_folder.glob("lab_*.py")]
 
         try:
-            lab = ListPrompt("Choose a lab to run", choices=available_labs).prompt()
+            lab = SelectPrompt("Choose a lab to run", choices=available_labs).prompt()
         except KeyboardInterrupt:
             typer.echo("Cancelled lab execution by user")
             return typer.Exit(1)
