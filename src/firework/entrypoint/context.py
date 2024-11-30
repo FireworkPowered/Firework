@@ -8,11 +8,11 @@ from firework.util import cvar
 from .typing import TEntity
 
 if TYPE_CHECKING:
-    from .fn.record import FnRecord, FnRecordLabel
+    from .record import EntrypointRecord, EntrypointRecordLabel
 
 
 class CollectContext:
-    fn_implements: dict[FnRecordLabel, FnRecord]
+    fn_implements: dict[EntrypointRecordLabel, EntrypointRecord]
 
     def __init__(self):
         self.fn_implements = {}

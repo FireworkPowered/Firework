@@ -8,23 +8,24 @@ from .context import CollectContext
 from .typing import TEntity
 
 if TYPE_CHECKING:
-    from .fn.endpoint import Fn
-    from .fn.implement import FnImplementEntity
-    from .fn.record import FnRecord
+    from .entrypoint import Entrypoint
+    from .implement import EntrypointImplement
+    from .record import EntrypointRecord
 
 
 GLOBAL_COLLECT_CONTEXT = CollectContext()
-
 COLLECTING_CONTEXT_VAR = ContextVar("CollectingContext", default=GLOBAL_COLLECT_CONTEXT)
-COLLECTING_IMPLEMENT_ENTITY: ContextVar[FnImplementEntity] = ContextVar("CollectingImplementEntity")
-COLLECTING_TARGET_RECORD: ContextVar[FnRecord] = ContextVar("CollectingTargetRecord")
+
+COLLECTING_IMPLEMENT_ENTITY: ContextVar[EntrypointImplement] = ContextVar("CollectingImplementEntity")
+COLLECTING_TARGET_RECORD: ContextVar[EntrypointRecord] = ContextVar("CollectingTargetRecord")
+
 LOOKUP_LAYOUT_VAR = ContextVar[Tuple[CollectContext, ...]]("LookupContext", default=(GLOBAL_COLLECT_CONTEXT,))
 
-CALLER_TOKENS: ContextVar[dict[Fn, int]] = ContextVar("CallerTokens", default={})
+LOOKUP_DEPTH: ContextVar[dict[Entrypoint, int]] = ContextVar("CallerTokens", default={})
 
 
-def iter_layout(endpoint: Fn):
-    index = CALLER_TOKENS.get().get(endpoint, -1)
+def iter_layout(endpoint: Entrypoint):
+    index = LOOKUP_DEPTH.get().get(endpoint, -1)
     contexts = LOOKUP_LAYOUT_VAR.get()
 
     for layer in contexts[index + 1 :]:

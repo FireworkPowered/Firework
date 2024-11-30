@@ -4,18 +4,18 @@ import functools
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable, Generic, Iterator
 
-from ..globals import CALLER_TOKENS, iter_layout
-from ..typing import C, P, R
+from .globals import LOOKUP_DEPTH, iter_layout
+from .typing import C, P, R
 
 if TYPE_CHECKING:
-    from .endpoint import Fn
-    from .overload import FnOverload, TCallValue
-    from .record import FnRecord
+    from .entrypoint import Entrypoint
+    from .overload import OverloadSpec, TCallValue
+    from .record import EntrypointRecord
 
 
 @dataclass
 class Candidates(Generic[C]):
-    endpoint: Fn[..., C]
+    endpoint: Entrypoint
     expect_complete: bool = False
 
     def __iter__(self) -> Iterator[Selection[C]]:
@@ -36,8 +36,8 @@ class Candidates(Generic[C]):
 
 @dataclass
 class Selection(Generic[C]):
-    record: FnRecord
-    endpoint: Fn[..., C]
+    record: EntrypointRecord
+    endpoint: Entrypoint
     result: dict[C, None] | None = None
     completed: bool = False
 
@@ -47,7 +47,7 @@ class Selection(Generic[C]):
         else:
             self.result = dict(self.result.items() & collection.items())
 
-    def harvest(self, overload: FnOverload[Any, Any, TCallValue], value: TCallValue):
+    def harvest(self, overload: OverloadSpec[Any, Any, TCallValue], value: TCallValue):
         digs = overload.dig(self.record, value)
         self.accept(digs)
         return digs
@@ -58,14 +58,14 @@ class Selection(Generic[C]):
     def _wraps(self, raw: C) -> C:
         @functools.wraps(raw)
         def wrapper(*args, **kwargs):
-            tokens = CALLER_TOKENS.get()
+            tokens = LOOKUP_DEPTH.get()
             current_index = tokens.get(self.endpoint, -1)
-            _tok = CALLER_TOKENS.set({**tokens, self.endpoint: current_index + 1})
+            _tok = LOOKUP_DEPTH.set({**tokens, self.endpoint: current_index + 1})
 
             try:
                 return raw(*args, **kwargs)
             finally:
-                CALLER_TOKENS.reset(_tok)
+                LOOKUP_DEPTH.reset(_tok)
 
         return wrapper  # type: ignore
 

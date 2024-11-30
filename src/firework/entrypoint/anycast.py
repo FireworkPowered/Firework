@@ -2,19 +2,19 @@ from __future__ import annotations
 
 from typing import Callable, Generic
 
-from ..fn.endpoint import Fn
-from ..overloads import SimpleOverload
-from ..typing import CR, P, R
+from .entrypoint import Entrypoint
+from .overloads import SimpleOverload
+from .typing import CR, P, R
 
 ANYCAST_OVERLOAD = SimpleOverload("flywheel.userspace.anycast")
 
 
 class Anycast(Generic[CR]):
-    endpoint: Fn[[], CR]
+    endpoint: Entrypoint
     prototype: CR
 
     def __init__(self, prototype: CR):
-        self.endpoint = Fn(self._prototype_collect)
+        self.endpoint = Entrypoint.static(self._prototype_collect)
         self.prototype = prototype
 
     @staticmethod
@@ -33,8 +33,4 @@ class Anycast(Generic[CR]):
 
     @property
     def override(self):
-        return self.endpoint.route()
-
-
-def wrap_anycast(entity: CR) -> Anycast[CR]:
-    return Anycast(entity)
+        return self.endpoint.impl()

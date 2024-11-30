@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable, Type
 
-from .fn.overload import FnOverload
+from .overload import OverloadSpec
 
 
 @dataclass(eq=True, frozen=True)
@@ -11,7 +11,7 @@ class SimpleOverloadSignature:
     value: Any
 
 
-class SimpleOverload(FnOverload[SimpleOverloadSignature, Any, Any]):
+class SimpleOverload(OverloadSpec[SimpleOverloadSignature, Any, Any]):
     def digest(self, collect_value: Any) -> SimpleOverloadSignature:
         return SimpleOverloadSignature(collect_value)
 
@@ -39,7 +39,7 @@ class TypeOverloadSignature:
     type: type[Any]
 
 
-class TypeOverload(FnOverload[TypeOverloadSignature, Type[Any], Any]):
+class TypeOverload(OverloadSpec[TypeOverloadSignature, Type[Any], Any]):
     def digest(self, collect_value: type) -> TypeOverloadSignature:
         return TypeOverloadSignature(collect_value)
 
@@ -69,7 +69,7 @@ class _SingletonOverloadSignature: ...
 SINGLETON_SIGN = _SingletonOverloadSignature()
 
 
-class SingletonOverload(FnOverload[_SingletonOverloadSignature, None, None]):
+class SingletonOverload(OverloadSpec[_SingletonOverloadSignature, None, None]):
     SIGNATURE = SINGLETON_SIGN
 
     def digest(self, collect_value) -> _SingletonOverloadSignature:

@@ -80,6 +80,9 @@ do_init = "firework.cli.commands.init:plugin"
 
 prelude = "firework.cli.prelude:plugin"
 
+[project.entry-points."firework.cli.recipes"]
+basic = "firework.cli.recipes.basic:main"
+
 [dependency-groups]
 dev = [
     "ruff>=0.7.2",
@@ -108,3 +111,7 @@ extend-select = ["I001"]
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
+
+[tool.pyright]
+reportRedeclaration = false
+reportIncompatibleMethodOverride = false
