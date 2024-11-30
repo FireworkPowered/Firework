@@ -1,6 +1,7 @@
 from .anycast import Anycast as Anycast
 from .context import CollectContext as CollectContext
 from .entrypoint import Entrypoint as Entrypoint
+from .entrypoint import entrypoint_collect as entrypoint_collect
 from .overload import SINGLETON_OVERLOAD as SINGLETON_OVERLOAD
 from .overload import OverloadSpec as OverloadSpec
 from .overload import SimpleOverload as SimpleOverload

@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Concatenate, Generator, Generic, Self, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Callable, Concatenate, Generator, Generic, Literal, Self, TypeVar, overload
 
+from .globals import COLLECTING_CONTEXT_VAR, GLOBAL_COLLECT_CONTEXT
 from .implement import EntrypointImplement
 from .record import CollectSignal, EntrypointRecordLabel
 from .selection import Candidates
 from .typing import CQ, P1, P2, C, P, R, T
+
+if TYPE_CHECKING:
+    from .context import CollectContext
 
 CollectEndpointTarget = Generator[CollectSignal, None, T]
 
@@ -196,3 +200,19 @@ class BoundCallableEntrypoint(
             return self.call_side.callee(self.instance, *args, **kwargs)
 
         return self.call_side.callee(*args, **kwargs)
+
+
+def entrypoint_collect(target: Literal["local", "global"] | CollectContext = "local"):
+    if target == "local":
+        context = COLLECTING_CONTEXT_VAR.get()
+    elif target == "global":
+        context = GLOBAL_COLLECT_CONTEXT
+    else:
+        context = target
+
+    def wrapper(func: C) -> C:
+        entity = _ensure_entity(func)
+        context.collect(entity)
+        return func
+
+    return wrapper
