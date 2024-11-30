@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Callable, Generic
 
 from .entrypoint import Entrypoint
-from .overloads import SimpleOverload
+from .overload import SimpleOverload
 from .typing import CR, P, R
 
 ANYCAST_OVERLOAD = SimpleOverload("flywheel.userspace.anycast")
