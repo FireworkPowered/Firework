@@ -160,6 +160,11 @@ class BoundEntrypoint(Generic[ImplementSideT, T], Entrypoint[ImplementSideT]):
     instance: T = field(hash=False)
     owner: type = field(hash=False)
 
+    @property
+    def signature(self):
+        if self.instance is not None:
+            raise RuntimeError("entrypoint bounded on instance does not support signature")
+
     def __init__(self, implement_side: ImplementSideT, instance: T, owner: type):
         super().__init__(implement_side)
         self.instance = instance
