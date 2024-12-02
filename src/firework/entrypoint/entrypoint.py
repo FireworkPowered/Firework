@@ -218,7 +218,7 @@ def entrypoint_collect(target: Literal["local", "global"] | CollectContext = "lo
     def wrapper(func: C) -> C:
         # entity = _ensure_entity(func
         if not hasattr(func, "__flywheel_implement_entity__"):
-            raise RuntimeError("entrypoint_collect must be used with @entrypoint.impl")
+            raise RuntimeError("[@]entrypoint_collect must be used with [@]entrypoint.impl")
 
         entity = func.__flywheel_implement_entity__  # type: ignore
         context.collect(entity)
