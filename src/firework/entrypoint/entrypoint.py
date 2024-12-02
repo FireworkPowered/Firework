@@ -148,9 +148,9 @@ class CallableEntrypoint(Generic[ImplementSideT, CallSideT], Entrypoint[Implemen
         return BoundCallableEntrypoint(self.implement_side, self.call_side, instance, owner)
 
     @overload
-    def __call__(self: CallableEntrypoint[Any, CallSide[Callable[P, R]]], *args: P.args, **kwargs: P.kwargs) -> R: ...
-    @overload
     def __call__(self: CallableEntrypoint[Any, BoundCallSide[Callable[P, R]]], *args: P.args, **kwargs: P.kwargs) -> R: ...
+    @overload
+    def __call__(self: CallableEntrypoint[Any, CallSide[Callable[P, R]]], *args: P.args, **kwargs: P.kwargs) -> R: ...
     def __call__(self, *args, **kwargs):
         return self.call_side.callee(*args, **kwargs)
 
@@ -171,11 +171,11 @@ class BoundEntrypoint(Generic[ImplementSideT, T], Entrypoint[ImplementSideT]):
         self.owner = owner
 
     @overload
-    def impl(self: BoundEntrypoint[ImplementSide[P1, C], Any], *args: P1.args, **kwargs: P1.kwargs) -> Callable[[C], C]: ...
-    @overload
     def impl(
         self: BoundEntrypoint[BoundImplementSide[Concatenate[T, P1], C], T], *args: P1.args, **kwargs: P1.kwargs
     ) -> Callable[[C], C]: ...
+    @overload
+    def impl(self: BoundEntrypoint[ImplementSide[P1, C], Any], *args: P1.args, **kwargs: P1.kwargs) -> Callable[[C], C]: ...
     def impl(self, *args, **kwargs) -> Callable[[C], C]:
         return self.implement_side.impl(self, *args, **kwargs)
 
