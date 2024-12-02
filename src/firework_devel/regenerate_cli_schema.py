@@ -10,6 +10,6 @@ FIREWORK_CLI_CONFIG_MOD = "firework.cli.config"
 
 
 def main():
-    schema = SchemaGenerator.from_dc(LumaConfig)  # type: ignore
+    schema = SchemaGenerator.from_dc(LumaConfig)
     with pkg_resources.path(FIREWORK_CLI_CONFIG_MOD, "schema.json") as f:
         f.write_text(json.dumps(schema, indent=4))

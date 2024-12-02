@@ -15,12 +15,14 @@ RT = TypeVar("RT")
 
 
 class DisableColorTransformation(StyleTransformation):
-    def __init__(self, no_ansi: bool = False):
+    def __init__(self, *, no_ansi: bool = False):
         self.no_ansi = no_ansi
 
     def transform_attrs(self, attrs: Attrs) -> Attrs:
         if self.no_ansi:
-            return Attrs("", "", False, False, False, False, False, False, False)
+            return Attrs(
+                color="", bgcolor="", bold=False, underline=False, strike=False, italic=False, blink=False, reverse=False, hidden=False
+            )
         return attrs
 
 
@@ -37,19 +39,20 @@ class BasePrompt(abc.ABC, Generic[RT]):
     def _build_keybindings(self) -> KeyBindings:
         raise NotImplementedError
 
-    def _build_application(self, no_ansi: bool, style: Style) -> Application:
+    def _build_application(self, style: Style, *, no_ansi: bool) -> Application:
         return Application(
             layout=self._build_layout(),
             style=self._build_style(style),
-            style_transformation=DisableColorTransformation(no_ansi),
+            style_transformation=DisableColorTransformation(no_ansi=no_ansi),
             key_bindings=self._build_keybindings(),
             mouse_support=True,
         )
 
     def prompt(
         self,
-        no_ansi: bool = False,
         style: Style | None = None,
+        *,
+        no_ansi: bool = False,
     ) -> RT:
         app = self._build_application(no_ansi=no_ansi, style=style or Style([]))
         return app.run()

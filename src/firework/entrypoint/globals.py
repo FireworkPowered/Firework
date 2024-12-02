@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from contextvars import ContextVar
-from typing import TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
 from .context import CollectContext
 
@@ -19,17 +19,17 @@ COLLECTING_CONTEXT_VAR = ContextVar("CollectingContext", default=GLOBAL_COLLECT_
 COLLECTING_IMPLEMENT_ENTITY: ContextVar[EntrypointImplement] = ContextVar("CollectingImplementEntity")
 COLLECTING_TARGET_RECORD: ContextVar[EntrypointRecord] = ContextVar("CollectingTargetRecord")
 
-LOOKUP_LAYOUT_VAR = ContextVar[Tuple[CollectContext, ...]]("LookupContext", default=(GLOBAL_COLLECT_CONTEXT,))
+LOOKUP_LAYOUT_VAR = ContextVar["tuple[CollectContext, ...]"]("LookupContext", default=(GLOBAL_COLLECT_CONTEXT,))
 
-LOOKUP_DEPTH: ContextVar[dict[Entrypoint, int]] = ContextVar("CallerTokens", default={})
+GLOBAL_LOOKUP_DEPTH = {}
+LOOKUP_DEPTH: ContextVar[dict[Entrypoint, int]] = ContextVar("CallerTokens", default=GLOBAL_LOOKUP_DEPTH)
 
 
 def iter_layout(endpoint: Entrypoint):
     index = LOOKUP_DEPTH.get().get(endpoint, -1)
     contexts = LOOKUP_LAYOUT_VAR.get()
 
-    for layer in contexts[index + 1 :]:
-        yield layer
+    yield from contexts[index + 1 :]
 
 
 def global_collect(entity: TEntity) -> TEntity:

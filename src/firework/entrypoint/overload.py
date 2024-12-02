@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Generic, Type, TypeVar
+from typing import Any, Callable, Generic, TypeVar
 
 from typing_extensions import final
 
@@ -84,7 +84,7 @@ class TypeOverloadSignature:
     type: type[Any]
 
 
-class TypeOverload(OverloadSpec[TypeOverloadSignature, Type[Any], Any]):
+class TypeOverload(OverloadSpec[TypeOverloadSignature, "type[Any]", Any]):
     def digest(self, collect_value: type) -> TypeOverloadSignature:
         return TypeOverloadSignature(collect_value)
 
@@ -117,17 +117,17 @@ SINGLETON_SIGN = _SingletonOverloadSignature()
 class SingletonOverload(OverloadSpec[_SingletonOverloadSignature, None, None]):
     SIGNATURE = SINGLETON_SIGN
 
-    def digest(self, collect_value) -> _SingletonOverloadSignature:
+    def digest(self, collect_value) -> _SingletonOverloadSignature:  # noqa: ARG002
         return SINGLETON_SIGN
 
-    def collect(self, scope: dict, signature) -> dict[Callable, None]:
+    def collect(self, scope: dict, signature) -> dict[Callable, None]:  # noqa: ARG002
         s = scope[None] = {}
         return s
 
-    def harvest(self, scope: dict, call_value) -> dict[Callable, None]:
+    def harvest(self, scope: dict, call_value) -> dict[Callable, None]:  # noqa: ARG002
         return scope[None]
 
-    def access(self, scope: dict, signature) -> dict[Callable, None] | None:
+    def access(self, scope: dict, signature) -> dict[Callable, None] | None:  # noqa: ARG002
         if None in scope:
             return scope[None]
 

@@ -22,7 +22,7 @@ class Anycast(Generic[CR]):
         yield ANYCAST_OVERLOAD.hold(None)
 
     def __call__(self: Anycast[Callable[P, R]], *args: P.args, **kwargs: P.kwargs) -> R:
-        for selection in self.endpoint.select(False):
+        for selection in self.endpoint.select(expect_complete=False):
             if selection.harvest(ANYCAST_OVERLOAD, None):
                 selection.complete()
                 break

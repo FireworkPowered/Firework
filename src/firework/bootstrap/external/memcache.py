@@ -39,7 +39,7 @@ class Memcache:
             self.cache[key] = (expire_time, value)
             heappush(self.expire, (expire_time, key))
 
-    async def delete(self, key: str, strict: bool = False) -> None:
+    async def delete(self, key: str, *, strict: bool = False) -> None:
         if strict or key in self.cache:
             del self.cache[key]
 

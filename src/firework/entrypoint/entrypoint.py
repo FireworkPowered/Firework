@@ -17,10 +17,10 @@ CollectEndpointTarget = Generator[CollectSignal, None, T]
 
 def _ensure_entity(func: Callable) -> EntrypointImplement:
     if hasattr(func, "__flywheel_implement_entity__"):
-        entity: EntrypointImplement = func.__flywheel_implement_entity__  # type: ignore
+        entity: EntrypointImplement = func.__flywheel_implement_entity__  # type: ignore[reportFunctionMemberAccess]
     else:
         entity = EntrypointImplement(func)
-        setattr(func, "__flywheel_implement_entity__", entity)
+        func.__flywheel_implement_entity__ = entity  # type: ignore[reportFunctionMemberAccess]
 
     return entity
 
@@ -100,10 +100,10 @@ class Entrypoint(Generic[ImplementSideT]):
         return EntrypointRecordLabel(self)
 
     @overload
-    def select(self: Entrypoint[ImplementSide[..., C]], expect_complete: bool = True) -> Candidates[C]: ...
+    def select(self: Entrypoint[ImplementSide[..., C]], *, expect_complete: bool = True) -> Candidates[C]: ...
     @overload
-    def select(self: Entrypoint[BoundImplementSide[..., C]], expect_complete: bool = True) -> Candidates[C]: ...
-    def select(self, expect_complete: bool = True) -> Candidates:
+    def select(self: Entrypoint[BoundImplementSide[..., C]], *, expect_complete: bool = True) -> Candidates[C]: ...
+    def select(self, *, expect_complete: bool = True) -> Candidates:
         return Candidates(self, expect_complete)
 
     def impl(self: Entrypoint[ImplementSide[P1, C]], *args: P1.args, **kwargs: P1.kwargs):

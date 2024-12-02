@@ -16,7 +16,7 @@ class EntrypointRecordLabel:
 @dataclass(eq=True, frozen=True)
 class EntrypointRecord:
     scopes: dict[str, dict[Any, Any]] = field(default_factory=dict)
-    entities: dict[frozenset[tuple[str, "OverloadSpec", Any]], Callable] = field(default_factory=dict)
+    entities: dict[frozenset[tuple[str, OverloadSpec, Any]], Callable] = field(default_factory=dict)
 
 
 @dataclass(eq=True, frozen=True)
