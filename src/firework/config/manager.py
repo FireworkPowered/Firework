@@ -91,11 +91,12 @@ class _KayakuCore:
         paths = set()
         for domain, cls in domain_map.items():
             domain_ident = tuple(domain.split("."))
+            if not all(domain_ident):
+                raise ValueError(f"{domain!r} contains empty segment!")
+            if domain_ident in self.classes:
+                raise NameError(f"{domain!r} is already occupied by {self.classes[domain_ident].cls!r}")
+
             try:
-                if not all(domain_ident):
-                    raise ValueError(f"{domain!r} contains empty segment!")
-                if domain_ident in self.classes:
-                    raise NameError(f"{domain!r} is already occupied by {self.classes[domain_ident].cls!r}")
                 path = self.register(domain_ident, cls)
                 paths.add(path)
             except Exception as e:  # noqa: BLE001
