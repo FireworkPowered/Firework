@@ -155,6 +155,7 @@ ignore = [
     "UP035",  # pyupgrade, 但 typing.Callable 的导入会报错
     "TRY003",
     "TRY301",  # 为啥非要把 raise 丢进另外一个 inner fn 里
+    "BLE001",  # except Exception as e
     "PGH003",  # 要求 `# type: ignore` 提供理由，但 pyright 和 mypy 等都不是统一标准。
     "PLC0414",  # 用 import-as 表示 re-export
     "N818",  # 要求所有自定义错误以 Error 作后缀，但我们不这么做

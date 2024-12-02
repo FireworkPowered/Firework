@@ -99,7 +99,7 @@ class _KayakuCore:
             try:
                 path = self.register(domain_ident, cls)
                 paths.add(path)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 exceptions.append(e)
         if exceptions:
             raise ExceptionGroup(f"{len(exceptions)} occurred during class registration", exceptions)
@@ -122,7 +122,7 @@ class _KayakuCore:
                 if self.instances.get(cls_entry.cls) is None:
                     try:
                         self.instances[cls_entry.cls] = from_dict(cls_entry.cls, container)
-                    except Exception as e:  # noqa: BLE001
+                    except Exception as e:
                         exceptions.append(
                             ExceptionGroup(
                                 f"Failed to bootstrap {cls_entry.cls} at {'.'.join(mount)}",
@@ -143,7 +143,7 @@ class _KayakuCore:
                 self.bootstrap_file(path, self.files[path])
             except ExceptionGroup as e:
                 exception_groups.append(e)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 exception_groups.append(ExceptionGroup(f"Error occurred during {path}", [e]))
         if exception_groups:
             raise ExceptionGroup(f"{len(exception_groups)} files failed to bootstrap", exception_groups)
@@ -205,7 +205,7 @@ class ConfigManager:
                 src_spec = parse_source(src)
                 path_spec = parse_path(path)
                 self._core.insert_spec(src_spec, path_spec)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 exceptions.append(e)
         if exceptions:
             raise ExceptionGroup(f"{len(exceptions)} occurred during spec initialization", exceptions)

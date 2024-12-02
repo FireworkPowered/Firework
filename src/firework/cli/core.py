@@ -69,7 +69,7 @@ class CliCore:
         for plugin in pkg_meta.entry_points(group="firework.cli.plugin"):
             try:
                 plugin.load()(self)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 self.ui.echo(
                     f"Failed to load plugin {plugin.name}={plugin.value}: {e!r}",
                     style="error",
@@ -93,7 +93,7 @@ class CliCore:
                 if self.ui.verbosity and "firework.toml" in str(e):
                     for exc in e.args[1]:
                         self.ui.echo(f"[error]{exc!r}", err=True)
-            except Exception as e:  # noqa: BLE001
+            except Exception as e:
                 self.ui.echo(f"[error]Error during loading [req]firework.toml[/req]: {e!r}", err=True)
 
     def register_command(self, command: type[Command]) -> None:
@@ -191,7 +191,7 @@ class CliCore:
             self._load_components()
             self._bootstrap_luma_file()
             f(self, options)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             should_show_tb = not isinstance(exc, LumaError)
             if self.ui.verbosity > term.Verbosity.NORMAL and should_show_tb:
                 import traceback
