@@ -133,7 +133,6 @@ select = [
     "Q",     # flake8-quotes
     "RSE",   # flake8-raise
     "RET",   # flake8-return
-    "SLF",   # flake8-self
     "SLOT",  # flake8-slots
     "SIM",   # flake8-simplify
     "TID",   # flake8-tidy-imports
@@ -155,10 +154,24 @@ ignore = [
     "E501",   # 过长的行由 ruff format 处理, 剩余的都是字符串
     "UP035",  # pyupgrade, 但 typing.Callable 的导入会报错
     "TRY003",
+    "TRY301",  # 为啥非要把 raise 丢进另外一个 inner fn 里
     "PGH003",  # 要求 `# type: ignore` 提供理由，但 pyright 和 mypy 等都不是统一标准。
     "PLC0414",  # 用 import-as 表示 re-export
+    "N818",  # 要求所有自定义错误以 Error 作后缀，但我们不这么做
+    "RET502", # return = return None
     "RET503",  # 就要 implicit return none
     "PLC0105",  # 我们已经用 R 表示协变，Q 表示逆变了
+    "PLR0913",  # 参数就那么多的，你用 builder 什么的不是更逆天？
+    "SIM108",  # 迫真 simplicy
+    "RUF009",  # 我不想要额外的全局变量。
+    "UP038",  # instance(..., X | Y) 还是太超前了
+    "RUF003",  # 中文注释里用全角符号怎么你了
+    "SLOT000", # 动态类型需求，主要是 json5 backend
+    "PLR0911", "PLR0912", "PLR0915",  # 复杂度高点怎么你了
+    "PYI041", # int 和 float 在运行时的类型没有交集（互不成立 issubclass）
+    "PLW2901",  # shallow 怎么你了
+    "S101", # assert 怎么你了，非要 RuntimeError 吗
+    "PLR2004",  # magic number 怎么你了
     "COM812", # 强制尾随逗号
     "TID252", # 相对导入
     "ISC001", # format warning

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 from dataclasses import MISSING, Field, asdict, is_dataclass
-from typing import Union, cast
+from typing import cast
 
 from .json5_backend.types import Array, BlockStyleComment, JObject, JString, JType, convert
 from .schema_gen import DataClass
@@ -60,6 +60,6 @@ def format_with_model(container: JObject, model: type[DataClass]) -> None:
     if not isinstance(container, JObject):
         raise TypeError(f"{container} is not a json object.")
 
-    fields = {k: (f, cast(Union[str, None], f.metadata.get("description"))) for k, f in model.__dataclass_fields__.items()}
+    fields = {k: (f, cast(str | None, f.metadata.get("description"))) for k, f in model.__dataclass_fields__.items()}
     format_exist(fields, container)
     format_not_exist(fields, container)

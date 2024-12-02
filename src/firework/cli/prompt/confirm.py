@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from prompt_toolkit.application import get_app
 from prompt_toolkit.buffer import Buffer
@@ -35,13 +35,13 @@ class ConfirmPrompt(BasePrompt[bool]):
     def __init__(
         self,
         question: str,
-        default_choice: Optional[bool] = None,
+        default_choice: bool | None = None,
         *,
-        question_mark: Optional[str] = None,
+        question_mark: str | None = None,
     ):
         self.question: str = question
         self.question_mark: str = "[?]" if question_mark is None else question_mark
-        self.default_choice: Optional[bool] = default_choice
+        self.default_choice: bool | None = default_choice
 
     def _reset(self):
         self._answered: bool = False
@@ -80,12 +80,12 @@ class ConfirmPrompt(BasePrompt[bool]):
         kb = KeyBindings()
 
         @kb.add("enter", eager=True)
-        def enter(event: KeyPressEvent):
+        def enter(event: KeyPressEvent):  # noqa: ARG001
             self._buffer.validate_and_handle()
 
         @kb.add("c-c", eager=True)
         @kb.add("c-q", eager=True)
-        def quit(event: KeyPressEvent):
+        def quit(event: KeyPressEvent):  # noqa: A001
             if self.default_choice is None:
                 event.app.exit(exception=KeyboardInterrupt("Cannot exit without answering the prompt."))
             else:
@@ -93,7 +93,7 @@ class ConfirmPrompt(BasePrompt[bool]):
 
         return kb
 
-    def _get_prompt(self, line_number: int, wrap_count: int) -> AnyFormattedText:
+    def _get_prompt(self, line_number: int, wrap_count: int) -> AnyFormattedText:  # noqa: ARG002
         prompts: AnyFormattedText = []
         if self.question_mark:
             prompts.append(("class:questionmark", self.question_mark))
@@ -110,17 +110,13 @@ class ConfirmPrompt(BasePrompt[bool]):
             prompts.append(("", " "))
         return prompts
 
-    def _validate(self, input: str) -> bool:
-        if not input and self.default_choice is None:
-            return False
-        elif input and input.lower() not in BOOLEAN_STRING:
-            return False
-        return True
+    def _validate(self, text: str) -> bool:
+        return text.lower() in BOOLEAN_STRING if text else self.default_choice is not None
 
     def _submit(self, buffer: Buffer) -> bool:
         self._answered = True
-        if input := buffer.document.text:
-            get_app().exit(result=str2bool(input))
+        if input_text := buffer.document.text:
+            get_app().exit(result=str2bool(input_text))
         else:
             buffer.insert_text("Yes" if self.default_choice else "No")
             get_app().exit(result=self.default_choice)

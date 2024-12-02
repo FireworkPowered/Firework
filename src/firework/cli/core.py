@@ -1,8 +1,8 @@
 r"""
- _____ _                             _    
+ _____ _                             _
 |  ___(_)_ __ _____      _____  _ __| | __
 | |_  | | '__/ _ \ \ /\ / / _ \| '__| |/ /
-|  _| | | | |  __/\ V  V / (_) | |  |   < 
+|  _| | | | |  __/\ V  V / (_) | |  |   <
 |_|   |_|_|  \___| \_/\_/ \___/|_|  |_|\_\
 """
 
@@ -69,7 +69,7 @@ class CliCore:
         for plugin in pkg_meta.entry_points(group="firework.cli.plugin"):
             try:
                 plugin.load()(self)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.ui.echo(
                     f"Failed to load plugin {plugin.name}={plugin.value}: {e!r}",
                     style="error",
@@ -93,7 +93,7 @@ class CliCore:
                 if self.ui.verbosity and "firework.toml" in str(e):
                     for exc in e.args[1]:
                         self.ui.echo(f"[error]{exc!r}", err=True)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 self.ui.echo(f"[error]Error during loading [req]firework.toml[/req]: {e!r}", err=True)
 
     def register_command(self, command: type[Command]) -> None:
@@ -105,15 +105,16 @@ class CliCore:
 
         if py_path is None:
             self.ui.echo("[info]Guessing Python path from invoking subprocess...", verbosity=1)
-            py_path = subprocess.run(
-                ["python", "-X", "utf8", "-c", "import sys;print(sys.executable, end='')"],
+            py_path = subprocess.run(  # noqa: S603
+                ["python", "-X", "utf8", "-c", "import sys;print(sys.executable, end='')"],  # noqa: S607
                 encoding="utf-8",
                 stdout=subprocess.PIPE,
+                check=False,
             ).stdout
 
         if self.python != py_path:
             self.ui.echo("[info]Regenerating [primary]Luma[/primary] process")
-            venv_luma = subprocess.run(
+            venv_luma = subprocess.run(  # noqa: S603
                 [
                     py_path,
                     "-c",
@@ -129,6 +130,7 @@ class CliCore:
                 ]
                 + sys.argv[1:]
                 + (["--python-path", py_path] if orig_py_path is None else []),
+                check=False,
             )
             sys.exit(venv_luma.returncode)
 
@@ -177,7 +179,11 @@ class CliCore:
             self.parser.print_help(sys.stderr)
             sys.exit(1)
 
-        self.project_root = Path(options.path or os.getenv("FIREWORK_PROJECT_ROOT") or os.getenv("PROJECT_ROOT") or os.getcwd())
+        path_str = options.path or os.getenv("FIREWORK_PROJECT_ROOT") or os.getenv("PROJECT_ROOT")
+        if path_str:
+            self.project_root = Path(path_str)
+        else:
+            self.project_root = Path.cwd()
 
         try:
             self._reforge_interpreter_env(options.python_path)
@@ -185,7 +191,7 @@ class CliCore:
             self._load_components()
             self._bootstrap_luma_file()
             f(self, options)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             should_show_tb = not isinstance(exc, LumaError)
             if self.ui.verbosity > term.Verbosity.NORMAL and should_show_tb:
                 import traceback

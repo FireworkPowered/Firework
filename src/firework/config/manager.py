@@ -51,17 +51,17 @@ class _KayakuCore:
     get_schema_generator: SchemaGenCallable
 
     def __post_init__(self):
-        self.files: dict[Path, _FileEntry] = dict()
-        self.classes: dict[DomainIdent, _ClassEntry] = dict()
-        self.cls_domains: dict[type[DataClass], DomainIdent] = dict()
-        self.instances: dict[type[DataClass], DataClass] = dict()
+        self.files: dict[Path, _FileEntry] = {}
+        self.classes: dict[DomainIdent, _ClassEntry] = {}
+        self.cls_domains: dict[type[DataClass], DomainIdent] = {}
+        self.instances: dict[type[DataClass], DataClass] = {}
         self.root = Prefix()
 
     def insert_spec(self, src: SourceSpec, path: PathSpec) -> None:
         prefix, suffix = src.prefix, src.suffix
         target_nd = self.root.insert(prefix).insert(reversed(suffix))
         if target_nd.bound:
-            raise ValueError(f"{'.'.join(prefix + ['*'] + suffix)} is already bound to {target_nd.bound}")
+            raise ValueError(f"{'.'.join([*prefix, '*', *suffix])} is already bound to {target_nd.bound}")
         target_nd.bound = (src, path)
 
     def lookup_path(self, domains: Sequence[str]) -> DestWithMount:
@@ -76,7 +76,7 @@ class _KayakuCore:
         mount = path_info.mount
         file_store = self.files.setdefault(path, _FileEntry(self.get_schema_generator(None)))
         for dc_field in get_fields(cls):
-            sub_dest: MountIdent = mount + (dc_field.name,)
+            sub_dest: MountIdent = (*mount, dc_field.name)
             if sub_dest in file_store.mount_record:
                 raise NameError(f"{path.with_suffix('').as_posix()}::{'.'.join(sub_dest)} is occupied!")
             file_store.mount_record.add(sub_dest)
@@ -94,11 +94,11 @@ class _KayakuCore:
             try:
                 if not all(domain_ident):
                     raise ValueError(f"{domain!r} contains empty segment!")
-                elif domain_ident in self.classes:
+                if domain_ident in self.classes:
                     raise NameError(f"{domain!r} is already occupied by {self.classes[domain_ident].cls!r}")
                 path = self.register(domain_ident, cls)
                 paths.add(path)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 exceptions.append(e)
         if exceptions:
             raise ExceptionGroup(f"{len(exceptions)} occurred during class registration", exceptions)
@@ -121,7 +121,7 @@ class _KayakuCore:
                 if self.instances.get(cls_entry.cls) is None:
                     try:
                         self.instances[cls_entry.cls] = from_dict(cls_entry.cls, container)
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
                         exceptions.append(
                             ExceptionGroup(
                                 f"Failed to bootstrap {cls_entry.cls} at {'.'.join(mount)}",
@@ -142,7 +142,7 @@ class _KayakuCore:
                 self.bootstrap_file(path, self.files[path])
             except ExceptionGroup as e:
                 exception_groups.append(e)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 exception_groups.append(ExceptionGroup(f"Error occurred during {path}", [e]))
         if exception_groups:
             raise ExceptionGroup(f"{len(exception_groups)} files failed to bootstrap", exception_groups)
@@ -204,7 +204,7 @@ class ConfigManager:
                 src_spec = parse_source(src)
                 path_spec = parse_path(path)
                 self._core.insert_spec(src_spec, path_spec)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 exceptions.append(e)
         if exceptions:
             raise ExceptionGroup(f"{len(exceptions)} occurred during spec initialization", exceptions)
@@ -218,12 +218,12 @@ class ConfigManager:
         self._core.register_batch(domain_map)
 
     @overload
-    def get(self, cls: type[DC_T], safe: Literal[False] = False) -> DC_T: ...
+    def get(self, cls: type[DC_T], *, safe: Literal[False] = False) -> DC_T: ...
 
     @overload
-    def get(self, cls: type[DC_T], safe: Literal[True]) -> DC_T | None: ...
+    def get(self, cls: type[DC_T], *, safe: Literal[True]) -> DC_T | None: ...
 
-    def get(self, cls: type[DC_T], safe: bool = False) -> DC_T | None:
+    def get(self, cls: type[DC_T], *, safe: bool = False) -> DC_T | None:
         """获取配置类的实例。"""
         res: Any = self._core.instances.get(cls)
         if res is None and not safe:

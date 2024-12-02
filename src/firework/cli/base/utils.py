@@ -53,26 +53,25 @@ class LumaFormatter(argparse.RawDescriptionHelpFormatter):
         # no help; start on same line and add a final newline
         if not action.help:
             return self._join_parts([self._format_action(subaction) for subaction in action._get_subactions()])  # type: ignore
+        # short action name; start on the same line and pad two spaces
+        if len(action_header) <= action_width:
+            action_header = f"{' ':{self._current_indent}}{action_header:<{action_width}}  "
+            indent_first = 0
+
+        # long action name; start on the next line
         else:
-            # short action name; start on the same line and pad two spaces
-            if len(action_header) <= action_width:
-                action_header = f"{' ':{self._current_indent}}{action_header:<{action_width}}  "
-                indent_first = 0
+            action_header = f"{' ':{self._current_indent}}{action_header}\n"
+            indent_first = help_position
 
-            # long action name; start on the next line
-            else:
-                action_header = f"{' ':{self._current_indent}}{action_header}\n"
-                indent_first = help_position
+        # add lines of help text
+        help_text = self._expand_help(action)
+        help_lines = self._split_lines(help_text, help_width)
 
-            # add lines of help text
-            help_text = self._expand_help(action)
-            help_lines = self._split_lines(help_text, help_width)
-
-            parts = [
-                term.style(action_header, style="primary"),
-                f"{' ':{indent_first}}{help_lines[0]}\n",
-                *(f"{' ':{help_position}}{line}\n" for line in help_lines[1:]),
-            ]
+        parts = [
+            term.style(action_header, style="primary"),
+            f"{' ':{indent_first}}{help_lines[0]}\n",
+            *(f"{' ':{help_position}}{line}\n" for line in help_lines[1:]),
+        ]
 
         # if there are any sub-actions, add their help as well
         parts.extend(self._format_action(subaction) for subaction in self._iter_indented_subactions(action))

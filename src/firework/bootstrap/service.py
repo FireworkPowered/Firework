@@ -28,7 +28,7 @@ class Service:
             pass
 
 
-def resolve_services_dependency(services: Iterable[Service], reverse: bool = False, exclude: Iterable[str] | None = None):
+def resolve_services_dependency(services: Iterable[Service], exclude: Iterable[str] | None = None, *, reverse: bool = False):
     return _resolve_requirements(
         [(service.id, service.dependencies) for service in services],
         reverse=reverse,

@@ -125,7 +125,7 @@ class SchemaGenerator:
     def retrieve_title(self, typ: type) -> str:
         return self.retrieve_name(typ)
 
-    def format_docstring_description(self, field: dataclasses.Field, description: str) -> str | None:
+    def format_docstring_description(self, f: dataclasses.Field, description: str) -> str | None:  # noqa: ARG002
         return description
 
     @classmethod
@@ -146,14 +146,13 @@ class SchemaGenerator:
                 return {"$ref": "#"}
             self.seen_root = True
             return self.create_dc_schema(dc)
-        else:
-            name = self.retrieve_name(dc)
-            if name not in self.defs:
-                schema = self.create_dc_schema(dc)
-                self.defs[name] = schema
-            return {
-                "$ref": f"#/$defs/{name}",
-            }
+        name = self.retrieve_name(dc)
+        if name not in self.defs:
+            schema = self.create_dc_schema(dc)
+            self.defs[name] = schema
+        return {
+            "$ref": f"#/$defs/{name}",
+        }
 
     def create_dc_schema(self, dc: type[DataClass]):
         schema = {
@@ -192,43 +191,43 @@ class SchemaGenerator:
     def get_simple_schema(self, typ: type, default: t.Any):
         if typ is t.Any:
             return self.get_any_schema(default)
-        elif typ in (None, type(None)):
+        if typ in (None, type(None)):
             return self.get_none_schema(default)
-        elif is_sub_type(typ, str):
+        if is_sub_type(typ, str):
             return self.get_str_schema(default)
-        elif is_sub_type(typ, bool):
+        if is_sub_type(typ, bool):
             return self.get_bool_schema(default)
-        elif is_sub_type(typ, int):
+        if is_sub_type(typ, int):
             return self.get_int_schema(default)
-        elif is_sub_type(typ, numbers.Number):
+        if is_sub_type(typ, numbers.Number):
             return self.get_number_schema(default)
-        elif is_sub_type(typ, enum.Enum):
+        if is_sub_type(typ, enum.Enum):
             return self.get_enum_schema(typ, default)
-        elif is_sub_type(typ, datetime.datetime):
+        if is_sub_type(typ, datetime.datetime):
             return self.get_datetime_schema()
-        elif is_sub_type(typ, datetime.date):
+        if is_sub_type(typ, datetime.date):
             return self.get_date_schema()
-        elif is_sub_type(typ, re.Pattern):
+        if is_sub_type(typ, re.Pattern):
             return self.get_regex_schema()
 
     def get_complex_schema(self, typ: type, default: t.Any):
         if dataclasses.is_dataclass(typ):
             return self.get_dc_schema(typ)
-        elif t.get_origin(typ) in Unions:
+        if t.get_origin(typ) in Unions:
             return self.get_union_schema(typ, default)
-        elif t.get_origin(typ) == t.Literal:
+        if t.get_origin(typ) == t.Literal:
             return self.get_literal_schema(typ, default)
-        elif t.get_origin(typ) == t.Annotated:
+        if t.get_origin(typ) == t.Annotated:
             return self.get_annotated_schema(typ, default)
-        elif t.is_typeddict(typ) or t_e.is_typeddict(typ):
+        if t.is_typeddict(typ) or t_e.is_typeddict(typ):
             return self.get_typed_dict_schema(typ)
-        elif is_sub_type(typ, dict):
+        if is_sub_type(typ, dict):
             return self.get_dict_schema(typ)
-        elif is_sub_type(typ, list):
+        if is_sub_type(typ, list):
             return self.get_list_schema(typ)
-        elif is_sub_type(typ, tuple):
+        if is_sub_type(typ, tuple):
             return self.get_tuple_schema(typ, default)
-        elif is_sub_type(typ, set):
+        if is_sub_type(typ, set):
             return self.get_set_schema(typ)
 
     def get_field_schema(self, typ: type, default: t.Any):
@@ -247,11 +246,10 @@ class SchemaGenerator:
             return {
                 "anyOf": [self.get_field_schema(arg, _MISSING) for arg in args],
             }
-        else:
-            return {
-                "anyOf": [self.get_field_schema(arg, _MISSING) for arg in args],
-                "default": default,
-            }
+        return {
+            "anyOf": [self.get_field_schema(arg, _MISSING) for arg in args],
+            "default": default,
+        }
 
     def get_literal_schema(self, typ, default):
         schema = {} if default is _MISSING else {"default": default}
@@ -267,8 +265,7 @@ class SchemaGenerator:
                 "type": "object",
                 "additionalProperties": self.get_field_schema(args[1], _MISSING),
             }
-        else:
-            return {"type": "object"}
+        return {"type": "object"}
 
     def get_typed_dict_schema(self, typ: type[EmptyTypedDict]):
         fields: list[tuple[str, t.Any]] = []
@@ -278,7 +275,7 @@ class SchemaGenerator:
             schema_anno: Schema | None = None
             if t_e.get_origin(anno) == t_e.Annotated:
                 anno, schema_anno = t_e.get_args(anno)
-            if t_e.get_origin(anno) == t_e.Required or typ.__total__ and t_e.get_origin(anno) != t_e.NotRequired:
+            if t_e.get_origin(anno) == t_e.Required or (typ.__total__ and t_e.get_origin(anno) != t_e.NotRequired):
                 required.append(name)
             if t_e.get_origin(anno) in (t_e.Required, t_e.NotRequired):
                 anno = t_e.get_args(anno)[0]
@@ -304,8 +301,7 @@ class SchemaGenerator:
                 "type": "array",
                 "items": self.get_field_schema(args[0], _MISSING),
             }
-        else:
-            return {"type": "array"}
+        return {"type": "array"}
 
     def get_tuple_schema(self, typ, default):
         schema = {} if default is _MISSING else {"default": list(default)}
@@ -337,38 +333,32 @@ class SchemaGenerator:
                 "items": self.get_field_schema(args[0], _MISSING),
                 "uniqueItems": True,
             }
-        else:
-            return {"type": "array", "uniqueItems": True}
+        return {"type": "array", "uniqueItems": True}
 
     def get_none_schema(self, default):
         if default is _MISSING:
             return {"type": "null"}
-        else:
-            return {"type": "null", "default": default}
+        return {"type": "null", "default": default}
 
     def get_str_schema(self, default):
         if default is _MISSING:
             return {"type": "string"}
-        else:
-            return {"type": "string", "default": default}
+        return {"type": "string", "default": default}
 
     def get_bool_schema(self, default):
         if default is _MISSING:
             return {"type": "boolean"}
-        else:
-            return {"type": "boolean", "default": default}
+        return {"type": "boolean", "default": default}
 
     def get_int_schema(self, default):
         if default is _MISSING:
             return {"type": "integer"}
-        else:
-            return {"type": "integer", "default": default}
+        return {"type": "integer", "default": default}
 
     def get_number_schema(self, default):
         if default is _MISSING:
             return {"type": "number"}
-        else:
-            return {"type": "number", "default": default}
+        return {"type": "number", "default": default}
 
     def get_enum_schema(self, typ: type[enum.Enum], default: enum.Enum):
         name = self.retrieve_name(typ)
@@ -382,11 +372,10 @@ class SchemaGenerator:
             return {
                 "$ref": f"#/$defs/{name}",
             }
-        else:
-            return {
-                "$ref": f"#/$defs/{name}",
-                "default": default.value,
-            }
+        return {
+            "$ref": f"#/$defs/{name}",
+            "default": default.value,
+        }
 
     def get_annotated_schema(self, typ, default):
         args = t.get_args(typ)

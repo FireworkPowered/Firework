@@ -25,11 +25,10 @@ def is_pipx_env() -> bool:
 
 def test_executable(executable: str) -> bool:
     return (
-        subprocess.run(
+        subprocess.run(  # noqa: S603
             [executable, "-V"],
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
+            check=False,
         ).returncode
         == 0
     )

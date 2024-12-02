@@ -14,8 +14,8 @@ from firework.util import any_completed
 
 try:
     from uvicorn import Config, Server
-except ImportError:
-    raise ImportError("dependency 'uvicorn' is required for asgi service")
+except ImportError as e:
+    raise ImportError("dependency 'uvicorn' is required for asgi service") from e
 
 
 MAX_QUEUE_SIZE = 10
@@ -31,7 +31,7 @@ async def _empty_asgi_handler(scope, receive, send):
             if message["type"] == "lifespan.startup":
                 await send({"type": "lifespan.startup.complete"})
                 return
-            elif message["type"] == "lifespan.shutdown":
+            if message["type"] == "lifespan.shutdown":
                 await send({"type": "lifespan.shutdown.complete"})
                 return
 
@@ -148,8 +148,8 @@ class UvicornASGIService(Service):
 
             # patch uvicorn logging
             level = logging.getLevelName(20)  # default level for uvicorn
-            PATCHES = ["uvicorn.error", "uvicorn.asgi", "uvicorn.access", ""]
-            for name in PATCHES:
+            loggers_to_patch = ["uvicorn.error", "uvicorn.asgi", "uvicorn.access", ""]
+            for name in loggers_to_patch:
                 target = logging.getLogger(name)
                 target.handlers = [_LoguruHandler(level=level)]
                 target.propagate = False

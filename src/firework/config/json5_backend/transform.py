@@ -39,11 +39,11 @@ class Transformer(BaseTransformer):
         return string
 
     @v_args(inline=True)
-    def SINGLE_QUOTE_CHARS(self, token: Token) -> tuple[str, list[int]]:
+    def SINGLE_QUOTE_CHARS(self, token: Token) -> tuple[str, list[int]]:  # noqa: N802
         return ast.literal_eval(f"'{token.value}'"), [m.start() for m in re.finditer("\\\n", token.value)]
 
     @v_args(inline=True)
-    def DOUBLE_QUOTE_CHARS(self, token: Token) -> tuple[str, list[int]]:
+    def DOUBLE_QUOTE_CHARS(self, token: Token) -> tuple[str, list[int]]:  # noqa: N802
         return ast.literal_eval(f'"{token.value}"'), [m.start() for m in re.finditer("\\\n", token.value)]
 
     @v_args(inline=True)
@@ -61,19 +61,19 @@ class Transformer(BaseTransformer):
         return s
 
     @v_args(inline=True)
-    def IDENTIFIER_NAME(self, string) -> Identifier:
+    def IDENTIFIER_NAME(self, string) -> Identifier:  # noqa: N802
         return Identifier(string)
 
     @v_args(inline=True)
     def number(self, number: JNumber):
         return number
 
-    def SIGNED_HEXNUMBER(self, token: Token):
+    def SIGNED_HEXNUMBER(self, token: Token):  # noqa: N802
         i = HexInteger(int(token.value, base=16))
         i.__post_init__(token.value)
         return i
 
-    def SIGNED_NUMBER(self, token: Token):
+    def SIGNED_NUMBER(self, token: Token):  # noqa: N802
         if (
             "." not in token.value
             and "e" not in token.value
@@ -97,16 +97,16 @@ class Transformer(BaseTransformer):
         return o
 
     def array(self, children: list) -> Any:
-        a = Array((cast(Value, value) for value in children if isinstance(value, JType)))
+        a = Array(cast(Value, value) for value in children if isinstance(value, JType))
         self._set_trail(a, children)
         return a
 
     @v_args(inline=True)
     def literal(self, token: Token):
         if token.value == "true":
-            return JWrapper[bool](True)
-        elif token.value == "false":
-            return JWrapper[bool](False)
+            return JWrapper[bool](True)  # noqa: FBT003
+        if token.value == "false":
+            return JWrapper[bool](False)  # noqa: FBT003
         assert token.value == "null"
         return JWrapper[None](None)
 

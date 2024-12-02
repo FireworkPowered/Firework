@@ -37,9 +37,10 @@ class Prettifier:
     def __init__(
         self,
         indent: int = 4,
+        string_quote: Quote | None = Quote.DOUBLE,
+        *,
         trail_comma: bool = True,
         key_quote: Quote | None | Literal[False] = False,
-        string_quote: Quote | None = Quote.DOUBLE,
         unfold_single: bool = False,
     ):
         """
@@ -100,10 +101,10 @@ class Prettifier:
     def format_container(self, new_obj: T_Container, obj: T_Container) -> T_Container:
         comments = [i for i in obj.json_container_tail if isinstance(i, Comment)]
         newline = Prettifier.require_newline(obj.json_container_tail)
-        new_obj.json_container_tail = self.format_wsc(comments, newline)
+        new_obj.json_container_tail = self.format_wsc(comments, require_newline=newline)
         return new_obj
 
-    def format_wsc(self, comments: list[Comment], require_newline: bool) -> list[WSC]:
+    def format_wsc(self, comments: list[Comment], *, require_newline: bool) -> list[WSC]:
         indent: str = " " * self.layer * self.indent
         wsc_list: list[WSC] = []
         for comment in comments:
@@ -163,7 +164,7 @@ class Prettifier:
                 v = self.prettify(v)
             v.json_before.append(WhiteSpace(" "))
             new_obj[k] = v
-            k.json_before = self.format_wsc(sub_comments, newline)
+            k.json_before = self.format_wsc(sub_comments, require_newline=newline)
         self.layer -= 1
         return self.format_container(new_obj, obj)
 
@@ -192,7 +193,7 @@ class Prettifier:
             v.__json_clear__()
             if isinstance(v, (Array, JObject)):
                 v = self.prettify(v)
-            v.json_before = self.format_wsc(sub_comments, newline)
+            v.json_before = self.format_wsc(sub_comments, require_newline=newline)
             new_arr.append(v)
         self.layer -= 1
         return self.format_container(new_arr, arr)

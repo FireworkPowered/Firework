@@ -20,14 +20,14 @@ class ProcessingState(int, Enum):
 
 class AnalyzeSnapshot:
     __slots__ = (
-        "state",
-        "command",
-        "option",
-        "traverses",
-        "endpoint",
-        "mix",
         "_pending_options",
         "_ref_cache_option",
+        "command",
+        "endpoint",
+        "mix",
+        "option",
+        "state",
+        "traverses",
     )
 
     state: ProcessingState
@@ -126,8 +126,8 @@ class AnalyzeSnapshot:
 
         self._pending_options = [
             (option, owner, triggers, separators)
-            for option, owner, triggers, separators in self._pending_options
-            if not (owner == owner and option.keyword in exit_options)
+            for option, option_owner, triggers, separators in self._pending_options
+            if not (owner == option_owner and option.keyword in exit_options)
         ] + [
             (option, owner, option._trigger, option.header_separators)  # type: ignore
             for option in pattern._options

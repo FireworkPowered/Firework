@@ -15,7 +15,7 @@ def into_tasks(awaitables: Iterable[_CoroutineLike]) -> list[asyncio.Task]:
 async def unity(
     tasks: Iterable[_CoroutineLike],
     *,
-    timeout: float | None = None,
+    timeout: float | None = None,  # noqa: ASYNC109
     return_when: str = asyncio.ALL_COMPLETED,
 ):
     return await asyncio.wait(into_tasks(tasks), timeout=timeout, return_when=return_when)

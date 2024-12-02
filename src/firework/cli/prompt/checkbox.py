@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import os
-from functools import lru_cache
 from gettext import gettext as _
-from typing import TYPE_CHECKING, Callable, List, Set
+from typing import TYPE_CHECKING, Callable
 
 from prompt_toolkit.filters import Condition, is_done
 from prompt_toolkit.key_binding import KeyBindings, KeyPressEvent
@@ -29,7 +28,7 @@ if TYPE_CHECKING:
 T = TypeVar("T", default=str)
 
 
-class CheckboxPrompt(BasePrompt[List[T]]):
+class CheckboxPrompt(BasePrompt[list[T]]):
     """Checkbox Prompt that supports auto scrolling.
 
     Style class guide:
@@ -47,14 +46,14 @@ class CheckboxPrompt(BasePrompt[List[T]]):
        └┬┘ └───────┬───────┘
       unsign   unselected
     ```
-    """
+    """  # noqa: RUF002
 
     def __init__(
         self,
         question: str,
         # choices: List[Choice[RT]]
         choices: list[str] | dict[str, T],
-        default_select: List[int] | None = None,
+        default_select: list[int] | None = None,
         *,
         question_mark: str | None = None,
         pointer: str | None = None,
@@ -71,9 +70,9 @@ class CheckboxPrompt(BasePrompt[List[T]]):
         else:
             self.choices = choices
 
-        self.default_select: Set[int] = set() if default_select is None else {index % len(self.choices) for index in default_select}
+        self.default_select: set[int] = set() if default_select is None else {index % len(self.choices) for index in default_select}
         self.question_mark: str = "[?]" if question_mark is None else question_mark
-        self.pointer: str = "❯" if pointer is None else pointer
+        self.pointer: str = "❯" if pointer is None else pointer  # noqa: RUF001
         self.selected_sign: str = "●" if selected_sign is None else selected_sign
         self.unselected_sign: str = "○" if unselected_sign is None else unselected_sign
         self.annotation: str = _("(Use ↑ and ↓ to move, Space to select, Enter to submit)") if annotation is None else annotation
@@ -91,7 +90,7 @@ class CheckboxPrompt(BasePrompt[List[T]]):
     def _reset(self):
         self._invalid: bool = False
         self._answered: bool = False
-        self._selected: Set[int] = self.default_select.copy()
+        self._selected: set[int] = self.default_select.copy()
 
     def _reset_error(self):
         self._invalid = False
@@ -155,17 +154,17 @@ class CheckboxPrompt(BasePrompt[List[T]]):
         kb = KeyBindings()
 
         @kb.add("up", eager=True)
-        def previous(event: KeyPressEvent):
+        def previous(event: KeyPressEvent):  # noqa: ARG001
             self._reset_error()
             self._handle_up()
 
         @kb.add("down", eager=True)
-        def next(event: KeyPressEvent):
+        def next(event: KeyPressEvent):  # noqa: A001, ARG001
             self._reset_error()
             self._handle_down()
 
         @kb.add("space", eager=True)
-        def select(event: KeyPressEvent):
+        def select(event: KeyPressEvent):  # noqa: ARG001
             self._reset_error()
             if self._index not in self._selected:
                 self._selected.add(self._index)
@@ -185,7 +184,7 @@ class CheckboxPrompt(BasePrompt[List[T]]):
 
         @kb.add("c-c", eager=True)
         @kb.add("c-q", eager=True)
-        def quit(event: KeyPressEvent):
+        def quit(event: KeyPressEvent):  # noqa: A001
             self._reset_error()
             event.app.exit(result=[])
 
@@ -275,12 +274,11 @@ class CheckboxPrompt(BasePrompt[List[T]]):
         return prompts
 
     def _get_error_prompt(self) -> AnyFormattedText:
-        return [("class:error", self.error_message, lambda e: self._reset_error())]
+        return [("class:error", self.error_message, lambda _: self._reset_error())]
 
     def _get_result(self):
         return [choice for index, choice in enumerate(self.choices) if index in self._selected]
 
-    @lru_cache
     def _get_mouse_handler(self, index: int | None = None) -> Callable[[MouseEvent], None]:
         def _handle_mouse(event: MouseEvent) -> None:
             self._reset_error()

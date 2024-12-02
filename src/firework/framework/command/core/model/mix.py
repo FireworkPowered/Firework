@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class Track:
-    __slots__ = ("fragments", "header", "cursor", "max_length", "emitted")
+    __slots__ = ("cursor", "emitted", "fragments", "header", "max_length")
 
     header: Fragment | None
     fragments: tuple[Fragment, ...]
@@ -165,7 +165,7 @@ class Track:
 
 
 class Preset:
-    __slots__ = ("subcommand_track", "option_tracks")
+    __slots__ = ("option_tracks", "subcommand_track")
 
     subcommand_track: Track
     option_tracks: dict[str, Track]
@@ -203,11 +203,7 @@ class Mix:
             if not track.satisfied:
                 return False
 
-        for track in self.option_tracks.values():
-            if not track.satisfied:
-                return False
-
-        return True
+        return all(track.satisfied for track in self.option_tracks.values())
 
     def update(self, root: tuple[str, ...], preset: Preset):
         self.command_tracks[root] = preset.subcommand_track.copy()

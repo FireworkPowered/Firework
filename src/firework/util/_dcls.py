@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    # ruff: noqa: FBT002
 
     def safe_dcls_kw(
         match_args=True,

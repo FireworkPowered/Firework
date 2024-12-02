@@ -56,12 +56,12 @@ def load(file: TextIO | Path) -> Any:
     return loads(data)
 
 
-def dumps(obj: Any, encoder_cls: type[Encoder] = Encoder, endline: bool = False) -> str:
+def dumps(obj: Any, encoder_cls: type[Encoder] = Encoder, *, endline: bool = False) -> str:
     """
     Serialize JSON to a string
     """
     fp = io.StringIO()
-    dump(obj, fp, encoder_cls, endline)
+    dump(obj, fp, encoder_cls, endline=endline)
     return fp.getvalue()
 
 
@@ -69,6 +69,7 @@ def dump(
     obj: Any,
     out: TextIO | Path,
     encoder_cls: type[Encoder] = Encoder,
+    *,
     endline: bool = False,
 ) -> None:
     """

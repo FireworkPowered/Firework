@@ -12,12 +12,12 @@ RxPut = Callable[[T], None]
 
 
 class Rx(Generic[T]):
-    def receive(self, fetch: RxFetch, prev: RxPrev, put: RxPut) -> None:
+    def receive(self, fetch: RxFetch, prev: RxPrev, put: RxPut) -> None:  # noqa: ARG002
         put(fetch())
 
 
 class CountRx(Rx[int]):
-    def receive(self, fetch: RxFetch, prev: RxPrev[int], put: RxPut[int]) -> None:
+    def receive(self, fetch: RxFetch, prev: RxPrev[int], put: RxPut[int]) -> None:  # noqa: ARG002
         v = prev()
 
         if v is None:
@@ -33,7 +33,7 @@ class AccumRx(Rx[T]):
         if v is None:
             put([fetch()])
         else:
-            put(v.value + [fetch()])
+            put([*v.value, fetch()])
 
 
 class ConstRx(Generic[T], Rx[T]):
@@ -42,5 +42,5 @@ class ConstRx(Generic[T], Rx[T]):
     def __init__(self, value: T):
         self.value = value
 
-    def receive(self, fetch: RxFetch, prev: RxPrev[T], put: RxPut[T]) -> None:
+    def receive(self, fetch: RxFetch, prev: RxPrev[T], put: RxPut[T]) -> None:  # noqa: ARG002
         put(self.value)

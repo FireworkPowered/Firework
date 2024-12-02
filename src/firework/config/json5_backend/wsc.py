@@ -21,13 +21,13 @@ class WSCTransformer(Transformer):
     """
 
     @v_args(inline=True)
-    def WS(self, token: Token) -> WhiteSpace:
+    def WS(self, token: Token) -> WhiteSpace:  # noqa: N802
         return WhiteSpace(token.value)
 
-    def CPP_COMMENT(self, token: Token) -> LineStyleComment:
+    def CPP_COMMENT(self, token: Token) -> LineStyleComment:  # noqa: N802
         return LineStyleComment(token.value[2:])
 
-    def C_COMMENT(self, token: Token) -> BlockStyleComment:
+    def C_COMMENT(self, token: Token) -> BlockStyleComment:  # noqa: N802
         return BlockStyleComment(token.value[2:-2])
 
     def wscs(self, wscs: list[WSC]) -> list[WSC]:

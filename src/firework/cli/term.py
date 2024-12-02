@@ -7,7 +7,7 @@ import contextlib
 import enum
 import logging
 import os
-from tempfile import mktemp
+from tempfile import NamedTemporaryFile
 from typing import Any, Iterator, Protocol, Sequence
 
 from rich.box import ROUNDED
@@ -144,8 +144,9 @@ class UI:
     def echo(
         self,
         message: Any = "",
-        err: bool = False,
         verbosity: Verbosity | int = Verbosity.NORMAL,
+        *,
+        err: bool = False,
         **kwargs: Any,
     ) -> None:
         """print message using rich console
@@ -176,7 +177,7 @@ class UI:
                 elif title[0] == ">":
                     title, justify = title[1:], "right"
                 else:
-                    title, justify = title, "left"
+                    justify = "left"
                 table.add_column(title, justify=justify)
         else:
             table = Table.grid(padding=(0, 1))
@@ -197,8 +198,9 @@ class UI:
             handler: logging.Handler = logging.StreamHandler()
             handler.setLevel(LOG_LEVELS[self.verbosity])
         else:
-            file_name = mktemp(".log", f"luma-{type_}-")
-            handler = logging.FileHandler(file_name, encoding="utf-8")
+            log_file = NamedTemporaryFile(suffix=".log", prefix=f"luma-{type_}-")  # noqa: SIM115
+            file_name = log_file.name
+            handler = logging.FileHandler(log_file.name, encoding="utf-8")
             handler.setLevel(logging.DEBUG)
         handler.setFormatter(logging.Formatter("%(name)s: %(message)s"))
         logger.addHandler(handler)
@@ -207,7 +209,7 @@ class UI:
             if not file_name:
                 return
             with contextlib.suppress(OSError):
-                os.unlink(file_name)
+                os.unlink(file_name)  # noqa: PTH108
 
         try:
             yield logger
@@ -229,8 +231,7 @@ class UI:
         """Open a spinner as a context manager."""
         if self.verbosity >= Verbosity.DETAIL or not is_interactive():
             return DummySpinner(title)
-        else:
-            return _console.status(title, spinner=SPINNER, spinner_style="primary")
+        return _console.status(title, spinner=SPINNER, spinner_style="primary")
 
     def make_progress(self, *columns: str | ProgressColumn, **kwargs: Any) -> Progress:
         """create a progress instance for indented spinners"""

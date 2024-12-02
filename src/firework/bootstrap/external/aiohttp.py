@@ -4,10 +4,10 @@ from firework.bootstrap import Service, ServiceContext
 
 try:
     from aiohttp import ClientSession, ClientTimeout
-except ImportError:
+except ImportError as e:
     raise ImportError(
         "dependency 'aiohttp' is required for aiohttp client service\nplease install it or install 'graia-amnesia[aiohttp]'"
-    )
+    ) from e
 
 
 class AiohttpClient(Service):

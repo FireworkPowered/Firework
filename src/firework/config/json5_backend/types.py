@@ -11,7 +11,7 @@ import math
 import re
 from datetime import date, datetime, time
 from enum import Enum
-from typing import Any, Generic, List, Tuple, TypeVar, overload
+from typing import Any, Generic, TypeVar, overload
 
 from typing_extensions import Self, TypeAlias
 
@@ -21,9 +21,9 @@ class JType:
     Base class for parsed types with style and metadata preservation.
     """
 
-    json_before: list[WSC] = []
+    json_before: list[WSC]
     """Whitespaces and comments sequence before the object."""
-    json_after: list[WSC] = []
+    json_after: list[WSC]
     """Whitespaces and comments sequence after the object."""
 
     def __post_init__(self) -> Self:
@@ -32,7 +32,7 @@ class JType:
         return self
 
     def __repr__(self) -> str:
-        if attrs := getattr(self, "__dict__"):
+        if attrs := self.__dict__:
             kwargs = ", ".join(f"{k}={v}" for k, v in attrs.items())
             return f"{self.__class__.__name__}({super().__repr__()}, {kwargs})"
         return f"{self.__class__.__name__}({super().__repr__()})"
@@ -47,9 +47,9 @@ class JContainer(JType):
     Base class for containers with style and metadata preservation.
     """
 
-    json_container_tail: list[WSC] = []
+    json_container_tail: list[WSC]
     """Whitespaces and comments sequence in the tail of the container."""
-    json_container_trailing_comma: bool = False
+    json_container_trailing_comma: bool
     """Wether this container have a trailing comma or not."""
 
     def __post_init__(
@@ -97,7 +97,7 @@ class JObject(JContainer, dict):
 T = TypeVar("T")
 
 
-class Array(JContainer, List[T]):
+class Array(JContainer, list[T]):
     """A JSON Array with style preservation"""
 
 
@@ -105,7 +105,7 @@ class Identifier(JType, str):
     "A quoteless string without special characters"
 
     def __repr__(self) -> str:
-        if attrs := getattr(self, "__dict__"):
+        if attrs := self.__dict__:
             kwargs = ", ".join(f"{k}={v}" for k, v in attrs.items())
             return f"{self.__class__.__name__}({super().__repr__()}, {kwargs})"
         return f"{self.__class__.__name__}({super().__repr__()})"
@@ -124,10 +124,10 @@ class Quote(str, Enum):
 class JString(JType, str):
     """A JSON String with style preservation"""
 
-    quote: Quote = Quote.DOUBLE
+    quote: Quote
     """Quote character wrapping the string"""
 
-    linebreaks: list[int] = []
+    linebreaks: list[int]
     """Escaped line breaks positions"""
 
     def __post_init__(
@@ -141,7 +141,7 @@ class JString(JType, str):
         return self
 
     def __repr__(self) -> str:
-        if attrs := getattr(self, "__dict__"):
+        if attrs := self.__dict__:
             kwargs = ", ".join(f"{k}={v}" for k, v in attrs.items())
             return f"{self.__class__.__name__}({self.quote.value}{self}{self.quote.value}, {kwargs})"
         return f"{self.__class__.__name__}({super().__repr__()})"
@@ -238,7 +238,7 @@ Value: TypeAlias = "JObject | Array | JString | JNumber | JWrapper | bool | None
 A type alias matching the JSON Value.
 """
 
-Member = Tuple[Key, Value]
+Member = tuple[Key, Value]
 """
 A Key-Value pair in an [Object][kayaku.backend.types.Object]
 """
@@ -252,7 +252,7 @@ def convert(obj: dict) -> JObject: ...
 
 
 @overload
-def convert(obj: "list | tuple") -> Array: ...
+def convert(obj: list | tuple) -> Array: ...
 
 
 @overload
@@ -260,7 +260,7 @@ def convert(obj: str) -> JString: ...
 
 
 @overload
-def convert(obj: "bool") -> JWrapper[bool]:  # type: ignore
+def convert(obj: bool) -> JWrapper[bool]:  # type: ignore  # noqa: FBT001
     ...
 
 

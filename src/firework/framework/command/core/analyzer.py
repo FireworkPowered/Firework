@@ -72,7 +72,7 @@ def analyze_loopflow(snapshot: AnalyzeSnapshot, buffer: Buffer[T]) -> LoopflowEx
 
             snapshot.state = ProcessingState.HEADER
             continue
-        elif state is ProcessingState.HEADER:
+        if state is ProcessingState.HEADER:
             if not isinstance(token.val, str):
                 return LoopflowExitReason.header_expect_str
 
@@ -121,7 +121,7 @@ def analyze_loopflow(snapshot: AnalyzeSnapshot, buffer: Buffer[T]) -> LoopflowEx
 
                         snapshot.enter_subcommand(token.val, subcommand)
                         continue
-                    elif not subcommand.soft_keyword:
+                    if not subcommand.soft_keyword:
                         return LoopflowExitReason.previous_subcommand_unsatisfied
 
             elif (option_info := snapshot.get_option(token.val)) is not None:
@@ -165,7 +165,7 @@ def analyze_loopflow(snapshot: AnalyzeSnapshot, buffer: Buffer[T]) -> LoopflowEx
                 raise ParsePanic from e
             else:
                 if response is None:
-                    # track 上没有 fragments 可供分配了，此时又没有再流转到其他 traverse
+                    # track 上没有 fragments 可供分配了, 此时又没有再流转到其他 traverse
                     return LoopflowExitReason.unexpected_segment
         else:
             track = mix.option_tracks[snapshot.option]  # type: ignore

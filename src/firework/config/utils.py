@@ -37,7 +37,7 @@ class DataClass(Protocol):
 
 def is_sub_type(sub: Any, parent: Any) -> bool:
     sub_origin = get_origin(sub) or sub
-    return isinstance(sub_origin, type) and issubclass(sub_origin, parent) or sub_origin == parent
+    return (isinstance(sub_origin, type) and issubclass(sub_origin, parent)) or sub_origin == parent
 
 
 DC_T = TypeVar("DC_T", bound=DataClass)
@@ -75,7 +75,7 @@ def _update_array(container: Array, data: list):
         container.json_container_trailing_comma = True
 
 
-def update(container: JObject, data: DataClass | dict, delete: bool = False):
+def update(container: JObject, data: DataClass | dict, *, delete: bool = False):
     if isinstance(data, DataClass):
         k_v_pairs = {f.name: getattr(data, f.name) for f in fields(data)}
     else:

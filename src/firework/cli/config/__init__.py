@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal, Union
+from typing import Literal
 
 from jsonschema import Draft202012Validator
 
@@ -43,7 +43,7 @@ class LumaConfig:
     deployment: Deployment = field(default_factory=Deployment)
     profiles: dict[str, list[str]] = field(default_factory=dict)
     config: Config = field(default_factory=Config)
-    services: list[Union[ServiceEntrypoint, ServiceCustom]] = field(default_factory=list)
+    services: list[ServiceEntrypoint | ServiceCustom] = field(default_factory=list)
     hooks: list[Hook] = field(default_factory=list)
 
     def __post_init__(self):
@@ -86,7 +86,7 @@ def into_config(config_file: Path) -> LumaConfig:
     from dacite.config import Config
     from dacite.core import from_dict
 
-    with open(config_file, "r", encoding="utf-8") as fp:
+    with config_file.open(encoding="utf-8") as fp:
         doc = tomlkit.load(fp)
         doc.pop("$schema", None)
 

@@ -44,8 +44,8 @@ def parse_source(spec: str) -> SourceSpec:
 
 
 class PathFill(enum.Enum):
-    SINGLE = object()  # {} or {*}
-    EXTEND = object()  # {**}
+    SINGLE = enum.auto()  # {} or {*}
+    EXTEND = enum.auto()  # {**}
 
 
 @dataclass

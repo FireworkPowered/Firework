@@ -11,8 +11,9 @@ class DependencyBrokenError(Exception):
 
 def resolve_requirements(
     components: Iterable[tuple[str, tuple[str, ...]]],
-    reverse: bool = False,
     excluded: set[str] | None = None,
+    *,
+    reverse: bool = False,
 ) -> list[set[str]]:
     resolved_id: set[str] = excluded or set()
     unresolved: set[tuple[str, tuple[str, ...]]] = set(components)
@@ -45,38 +46,3 @@ def validate_removal(graph: dict[str, set[str]], nodes_to_remove: Iterable[str])
         for dependent in reverse_graph.get(node, set()):
             if dependent not in nodes_to_remove:
                 raise DependencyBrokenError(f"Cannot remove node '{node}' because node '{dependent}' depends on it.")
-
-
-if __name__ == "__main__":
-    components = [
-        ("a", ("b", "c")),
-        ("b", ("c",)),
-        ("c", ()),
-        ("d", ("a",)),
-    ]
-    print(resolve_requirements(components))
-    print(resolve_requirements(components, reverse=True))
-
-    try:
-        print(resolve_requirements([("a", ("b",)), ("b", ("a",))]))
-    except RequirementResolveFailed as e:
-        print(e)
-
-    graph = {
-        "a": {"b", "c"},
-        "b": {"c"},
-        "c": set(),
-        "d": {"a"},
-        "e": {"d"},
-        "f": {"e"},
-        "g": {"h"},
-        "h": set(),
-    }
-
-    try:
-        nodes_to_remove = {"a"}
-    except DependencyBrokenError as e:
-        print(f"移除失败: {e}")
-
-    validate_removal(graph, {"a", "d", "e", "f"})
-    validate_removal(graph, {"g", "h"})

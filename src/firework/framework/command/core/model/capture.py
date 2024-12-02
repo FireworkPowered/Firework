@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Generic, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from elaina_segment import Quoted, UnmatchedQuoted
 from typing_extensions import TypeAlias
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
-CaptureResult: TypeAlias = "Tuple[T, Maybe[Any], Union[SegmentToken[T], AheadToken[T]]]"
+CaptureResult: TypeAlias = "tuple[T, Maybe[Any], SegmentToken[T] | AheadToken[T]]"
 
 
 class Capture(Generic[T]):
@@ -41,7 +41,7 @@ class ObjectCapture(Capture[T]):
         return token.val, None, token
 
 
-Plain: TypeAlias = "Union[str, Quoted[str], UnmatchedQuoted[str]]"
+Plain: TypeAlias = "str | Quoted[str] | UnmatchedQuoted[str]"
 
 
 @dataclass(**safe_dcls_kw(eq=True, unsafe_hash=True, slots=True))
@@ -51,7 +51,7 @@ class PlainCapture(Capture[Plain]):
 
         if isinstance(token.val, str):
             return token.val, None, token
-        elif isinstance(token.val, (Quoted, UnmatchedQuoted)):
+        if isinstance(token.val, (Quoted, UnmatchedQuoted)):
             if isinstance(token.val.ref, str):
                 val = token.val.ref
             elif next((i for i in token.val.ref if not isinstance(i, str)), None) is None:
@@ -60,8 +60,7 @@ class PlainCapture(Capture[Plain]):
                 raise UnexpectedType(str, type(next(i for i in token.val.ref if not isinstance(i, str))))
 
             return val, None, token
-        else:
-            raise UnexpectedType(str, type(token.val))
+        raise UnexpectedType(str, type(token.val))
 
 
 @dataclass(**safe_dcls_kw(eq=True, unsafe_hash=True, slots=True))

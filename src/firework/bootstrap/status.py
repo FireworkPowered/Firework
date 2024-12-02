@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Tuple
 
 
 class Stage(int, Enum):
@@ -17,4 +16,4 @@ class Phase(int, Enum):
     COMPLETED = 2
 
 
-ServiceStatusValue = Tuple[Stage, Phase]
+ServiceStatusValue = tuple[Stage, Phase]

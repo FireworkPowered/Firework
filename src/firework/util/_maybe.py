@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Generic, TypeVar, Union
+from typing import Generic, TypeAlias, TypeVar
 
 T = TypeVar("T")
 E = TypeVar("E", bound=BaseException)
@@ -12,4 +12,4 @@ class Some(Generic[T]):
     value: T
 
 
-Maybe = Union[Some[T], None]
+Maybe: TypeAlias = "Some[T] | None"

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from functools import lru_cache
 from gettext import gettext as _
 from time import time
 from typing import TYPE_CHECKING, Callable
@@ -56,15 +55,15 @@ class SelectPrompt(BasePrompt[T]):
     └─────┬─────┘
         error
     ```
-    """
+    """  # noqa: RUF002
 
     def __init__(
         self,
         question: str,
         choices: list[str] | dict[str, T],
-        allow_filter: bool = True,
         default_select: int | None = None,
         *,
+        allow_filter: bool = True,
         question_mark: str | None = None,
         pointer: str | None = None,
         annotation: str | None = None,
@@ -82,7 +81,7 @@ class SelectPrompt(BasePrompt[T]):
 
         self.allow_filter: bool = allow_filter
         self.question_mark: str = "[?]" if question_mark is None else question_mark
-        self.pointer: str = "❯" if pointer is None else pointer
+        self.pointer: str = "❯" if pointer is None else pointer  # noqa: RUF001
         self.annotation: str = _("(Use ↑ and ↓ to choose, Enter to submit)") if annotation is None else annotation
         # self.validator: Callable[[Choice[RT]], bool] | None = validator
         self.error_message: str = _("Invalid selection") if error_message is None else error_message
@@ -109,7 +108,7 @@ class SelectPrompt(BasePrompt[T]):
         self._buffer: Buffer = Buffer(
             name=DEFAULT_BUFFER,
             multiline=False,
-            on_text_changed=lambda b: self._reset_choice_layout(),
+            on_text_changed=lambda _: self._reset_choice_layout(),
         )
 
     def _reset_choice_layout(self):
@@ -191,23 +190,23 @@ class SelectPrompt(BasePrompt[T]):
         kb = KeyBindings()
 
         @kb.add("up", eager=True)
-        def previous(event: KeyPressEvent):
+        def previous(event: KeyPressEvent):  # noqa: ARG001
             self._reset_error()
             self._handle_up()
 
         @kb.add("down", eager=True)
-        def next(event: KeyPressEvent):
+        def next(event: KeyPressEvent):  # noqa: A001, ARG001
             self._reset_error()
             self._handle_down()
 
         @kb.add("enter", eager=True)
-        def enter(event: KeyPressEvent):
+        def enter(event: KeyPressEvent):  # noqa: ARG001
             self._reset_error()
             self._finish()
 
         @kb.add("c-c", eager=True)
         @kb.add("c-q", eager=True)
-        def quit(event: KeyPressEvent):
+        def quit(event: KeyPressEvent):  # noqa: A001
             self._reset_error()
             event.app.exit(exception=KeyboardInterrupt("Cannot exit without answering the prompt."))
 
@@ -231,7 +230,7 @@ class SelectPrompt(BasePrompt[T]):
         self._buffer.reset()
         get_app().exit(result=result)
 
-    def _get_line_prefix(self, line_number: int, wrap_count: int) -> AnyFormattedText:
+    def _get_line_prefix(self, line_number: int, wrap_count: int) -> AnyFormattedText:  # noqa: ARG002
         return self._get_prompt()
 
     def _get_prompt(self) -> AnyFormattedText:
@@ -289,9 +288,8 @@ class SelectPrompt(BasePrompt[T]):
         return prompts
 
     def _get_error_prompt(self) -> AnyFormattedText:
-        return [("class:error", self.error_message, lambda e: self._reset_error())]
+        return [("class:error", self.error_message, lambda _: self._reset_error())]
 
-    @lru_cache
     def _get_mouse_handler(self, index: int | None = None) -> Callable[[MouseEvent], None]:
         def _handle_mouse(event: MouseEvent) -> None:
             self._reset_error()

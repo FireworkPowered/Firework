@@ -4,7 +4,7 @@ import asyncio
 import signal
 from typing import TYPE_CHECKING, Any, Iterable
 
-from exceptiongroup import BaseExceptionGroup
+from exceptiongroup import BaseExceptionGroup  # noqa: A004
 from loguru import logger
 
 from firework.globals import BOOTSTRAP_CONTEXT
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 def _dummy_online():
-    async def _dummy_offline(exit: bool = True):
+    async def _dummy_offline(*, trigger_exit: bool = True):
         pass
 
     return _dummy_offline
@@ -116,8 +116,8 @@ class Bootstrap:
             for service in services:
                 self.contexts[service.id].dispatch_online()
 
-            async def _offline(exit: bool = True):
-                failed_offline = await self._handle_stage_cleanup(services, trigger_exit=exit)
+            async def _offline(*, trigger_exit: bool = True):
+                failed_offline = await self._handle_stage_cleanup(services, trigger_exit=trigger_exit)
 
                 if failed_record is not None and failed_offline is not None:
                     failed_record.extend(failed_offline)
@@ -170,7 +170,7 @@ class Bootstrap:
             self.task_group.update(layer_tasks)
             previous_tasks.extend(layer_tasks)
 
-    async def _handle_stage_cleanup(self, services: Iterable[Service], trigger_exit: bool = True):
+    async def _handle_stage_cleanup(self, services: Iterable[Service], *, trigger_exit: bool = True):
         service_bind = {}
         for service in services:
             if service.id not in self.services:
@@ -194,8 +194,7 @@ class Bootstrap:
             completed_task, _ = await any_completed([awaiting_daemon_exit, awaiting_dispatch_ready])
 
             if completed_task is awaiting_daemon_exit:
-                unresolved = [task for task in daemon_tasks if task.done()]
-                return unresolved
+                return [task for task in daemon_tasks if task.done()]
 
             for context in _contexts.values():
                 context.dispatch_cleanup()
@@ -207,8 +206,7 @@ class Bootstrap:
             await any_completed([awaiting_cleanup, awaiting_daemon_exit])  # update asyncio.Task state
 
             if completed_task is awaiting_daemon_exit and not awaiting_cleanup.done():
-                completed_daemon = [task for task in daemon_tasks if task.done()]
-                return completed_daemon
+                return [task for task in daemon_tasks if task.done()]
 
             await asyncio.gather(*[i.wait_for(Stage.EXIT, Phase.COMPLETED) for i in _contexts.values()])
 
@@ -232,7 +230,7 @@ class Bootstrap:
                     logger.success("Service startup complete, Ctrl-C to exit application.", style="green bold")
                     await self.task_group.wait()
             finally:
-                await offline_callback(False)
+                await offline_callback(trigger_exit=False)
 
                 if failed:
                     exceptions = [i.exception() or UnhandledExit() for i in failed]
@@ -254,7 +252,7 @@ class Bootstrap:
         launch_task = loop.create_task(self.launch(), name="amnesia-launch")
         handled_signals: dict[signal.Signals, Any] = {}
 
-        def signal_handler(x, y):
+        def signal_handler(*_):
             return self._on_sys_signal(launch_task)
 
         if threading.current_thread() is threading.main_thread():  # pragma: worst case
@@ -298,5 +296,5 @@ class Bootstrap:
         if not launch_task.done():
             launch_task.cancel()
             # wakeup loop if it is blocked by select() with long timeout
-            launch_task._loop.call_soon_threadsafe(lambda: None)
+            launch_task.get_loop().call_soon_threadsafe(lambda: None)
             logger.warning("Ctrl-C triggered by user.", style="dark_orange bold")

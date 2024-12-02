@@ -16,7 +16,7 @@ class HookTarget:
     core: list[Callable] = cp_field([])
     post: list[Callable] = cp_field([])
 
-    def warn_hooks(self, ui: UI, pre: bool = False, post: bool = False) -> None:
+    def warn_hooks(self, ui: UI, *, pre: bool = False, post: bool = False) -> None:
         if pre and self.pre:
             for pre_fn in self.pre:
                 ui.echo(f"[warning]pre_{self.name} hook {pre_fn.__module__}:{pre_fn.__qualname__} is not invoked!")
@@ -31,7 +31,7 @@ class HookManager:
         self.ui: UI = ui
         self.locked: bool = False
 
-    def add_hook(self, target: str, func: Callable, exclusive: bool = False) -> None:
+    def add_hook(self, target: str, func: Callable, *, exclusive: bool = False) -> None:
         stage = "core"
         if target.startswith(("pre_", "post_")):
             stage = target[:3]

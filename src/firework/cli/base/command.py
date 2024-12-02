@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from .utils import LumaFormatter, Option
 
@@ -37,7 +37,7 @@ class Command(abc.ABC):
     description: str | None = None
     # A list of pre-defined options which will be loaded on initializing
     # Rewrite this if you don't want the default ones
-    arguments: list[Option] = [verbose_option]
+    arguments: ClassVar[list[Option]] = [verbose_option]
 
     def __init__(self, parser: argparse.ArgumentParser) -> None:
         for arg in self.arguments:
@@ -72,7 +72,7 @@ class Command(abc.ABC):
 
     def add_arguments(self, parser: argparse.ArgumentParser) -> None:
         """Manipulate the argument parser to add more arguments"""
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def handle(self, core: CliCore, options: argparse.Namespace) -> None:

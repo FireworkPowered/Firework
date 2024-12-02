@@ -25,7 +25,8 @@ class ServiceContext:
 
         if stage < prev_stage and prev_stage != Stage.EXIT:
             raise ValueError(f"Cannot update stage from {prev_stage} to {stage}")
-        elif stage == prev_stage:
+
+        if stage == prev_stage:
             if phase <= prev_phase:
                 raise ValueError(f"Cannot update phase from {prev_phase} to {phase}")
         else:
