@@ -5,12 +5,12 @@ from contextvars import ContextVar
 from typing import TYPE_CHECKING, Tuple
 
 from .context import CollectContext
-from .typing import TEntity
 
 if TYPE_CHECKING:
     from .entrypoint import Entrypoint
     from .implement import EntrypointImplement
     from .record import EntrypointRecord
+    from .typing import TEntity
 
 
 GLOBAL_COLLECT_CONTEXT = CollectContext()

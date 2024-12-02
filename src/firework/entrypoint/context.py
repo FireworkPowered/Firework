@@ -5,10 +5,9 @@ from typing import TYPE_CHECKING
 
 from firework.util import cvar
 
-from .typing import TEntity
-
 if TYPE_CHECKING:
     from .record import EntrypointRecord, EntrypointRecordLabel
+    from .typing import TEntity
 
 
 class CollectContext:

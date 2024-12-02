@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import timedelta
 from heapq import heappop, heappush
 from time import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from firework.bootstrap import Service, ServiceContext
+
+if TYPE_CHECKING:
+    from datetime import timedelta
 
 
 class Memcache:

@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
-from elaina_segment import Buffer
 from elaina_segment.err import OutOfData
 
 from .err import ParsePanic, Rejected
 from .model.snapshot import AnalyzeSnapshot, ProcessingState
+
+if TYPE_CHECKING:
+    from elaina_segment import Buffer
 
 T = TypeVar("T")
 

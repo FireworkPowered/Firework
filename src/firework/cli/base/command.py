@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import abc
-import argparse
 from typing import TYPE_CHECKING
 
 from .utils import LumaFormatter, Option
 
 if TYPE_CHECKING:
+    import argparse
+
     from ..core import CliCore
 
 

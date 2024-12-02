@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any
 
@@ -10,14 +9,17 @@ from firework.globals import CONFIG_MANAGER_CONTEXT
 from firework.util._cvar import cvar
 
 from ..base import Command
-from ..config import LumaConfig
-from ..core import CliCore
 from ..exceptions import LumaConfigError
-from ..term import UI
 from ..util import ensure_config, load_from_string
 
 if TYPE_CHECKING:
+    import argparse
+
     from firework.bootstrap.service import Service
+
+    from ..config import LumaConfig
+    from ..core import CliCore
+    from ..term import UI
 
 
 def plugin(core: CliCore):

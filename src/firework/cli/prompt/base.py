@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import abc
-from typing import Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from prompt_toolkit.application import Application
-from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.layout import Layout
 from prompt_toolkit.styles import Attrs, Style, StyleTransformation
+
+if TYPE_CHECKING:
+    from prompt_toolkit.key_binding import KeyBindings
+    from prompt_toolkit.layout import Layout
 
 DT = TypeVar("DT")
 RT = TypeVar("RT")

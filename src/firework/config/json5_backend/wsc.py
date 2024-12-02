@@ -4,11 +4,15 @@ This module handles whitespaces and comments
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from lark.lark import Lark
-from lark.lexer import Token
 from lark.visitors import Transformer, v_args
 
 from .types import WSC, BlockStyleComment, LineStyleComment, WhiteSpace
+
+if TYPE_CHECKING:
+    from lark.lexer import Token
 
 
 class WSCTransformer(Transformer):

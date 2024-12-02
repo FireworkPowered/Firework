@@ -106,7 +106,7 @@ cloc = {shell = "tokei src"}
 line-length = 135
 
 [tool.ruff.lint]
-extend-select = ["I001"]
+extend-select = ["I001", "TC"]
 
 [build-system]
 requires = ["pdm-backend"]

@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import ast
 import inspect
-from dataclasses import Field
 from types import MappingProxyType
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from loguru import logger
+
+if TYPE_CHECKING:
+    from dataclasses import Field
 
 
 def cleanup_src(src: str) -> str:

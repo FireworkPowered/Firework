@@ -3,10 +3,9 @@ from __future__ import annotations
 import os
 from functools import lru_cache
 from gettext import gettext as _
-from typing import Callable, List, Set
+from typing import TYPE_CHECKING, Callable, List, Set
 
 from prompt_toolkit.filters import Condition, is_done
-from prompt_toolkit.formatted_text import AnyFormattedText
 from prompt_toolkit.key_binding import KeyBindings, KeyPressEvent
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.containers import (
@@ -23,6 +22,9 @@ from prompt_toolkit.styles import Style
 from typing_extensions import TypeVar
 
 from .base import BasePrompt
+
+if TYPE_CHECKING:
+    from prompt_toolkit.formatted_text import AnyFormattedText
 
 T = TypeVar("T", default=str)
 

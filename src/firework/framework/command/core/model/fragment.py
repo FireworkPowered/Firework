@@ -14,7 +14,6 @@ class Fragment:
     name: str
     variadic: bool = False
     default: Maybe[Any] = None
-    export: bool = False
 
     separators: str | None = None
     hybrid_separators: bool = True

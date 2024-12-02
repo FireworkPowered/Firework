@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from typing import TYPE_CHECKING
 
-from .spec import DestWithMount, PathSpec, SourceSpec
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
+    from .spec import DestWithMount, PathSpec, SourceSpec
 
 
 class Suffix:

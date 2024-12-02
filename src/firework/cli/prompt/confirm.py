@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from prompt_toolkit.application import get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import DEFAULT_BUFFER
-from prompt_toolkit.formatted_text import AnyFormattedText
 from prompt_toolkit.key_binding import KeyBindings, KeyPressEvent
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.containers import HSplit, Window
@@ -16,6 +15,9 @@ from prompt_toolkit.validation import Validator
 
 from .base import BasePrompt
 from .util import BOOLEAN_STRING, str2bool
+
+if TYPE_CHECKING:
+    from prompt_toolkit.formatted_text import AnyFormattedText
 
 
 class ConfirmPrompt(BasePrompt[bool]):

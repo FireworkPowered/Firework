@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
-from .term import UI
 from .util import cp_field
+
+if TYPE_CHECKING:
+    from .term import UI
 
 
 @dataclass

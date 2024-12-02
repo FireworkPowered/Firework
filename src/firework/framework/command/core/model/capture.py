@@ -2,15 +2,17 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Any, Generic, Tuple, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Generic, Tuple, TypeVar, Union
 
 from elaina_segment import Quoted, UnmatchedQuoted
-from elaina_segment.buffer import AheadToken, Buffer, SegmentToken
 from typing_extensions import TypeAlias
 
 from firework.util import Maybe, Some, safe_dcls_kw
 
 from ..err import RegexMismatch, UnexpectedType
+
+if TYPE_CHECKING:
+    from elaina_segment.buffer import AheadToken, Buffer, SegmentToken
 
 T = TypeVar("T")
 

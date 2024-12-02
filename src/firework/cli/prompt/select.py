@@ -4,13 +4,12 @@ import os
 from functools import lru_cache
 from gettext import gettext as _
 from time import time
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 from prompt_toolkit.application import get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.enums import DEFAULT_BUFFER
 from prompt_toolkit.filters import Condition, is_done
-from prompt_toolkit.formatted_text import AnyFormattedText
 from prompt_toolkit.key_binding import KeyBindings, KeyPressEvent
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.containers import (
@@ -28,6 +27,9 @@ from prompt_toolkit.styles import Style
 from typing_extensions import TypeVar
 
 from .base import BasePrompt
+
+if TYPE_CHECKING:
+    from prompt_toolkit.formatted_text import AnyFormattedText
 
 T = TypeVar("T", default=str)
 

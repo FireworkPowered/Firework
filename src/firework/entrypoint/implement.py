@@ -4,12 +4,12 @@ from typing import TYPE_CHECKING, Callable
 
 from firework.util import cvar
 
-from .context import CollectContext
 from .entity import BaseEntity
 from .globals import COLLECTING_IMPLEMENT_ENTITY, COLLECTING_TARGET_RECORD
 from .record import EntrypointRecord
 
 if TYPE_CHECKING:
+    from .context import CollectContext
     from .entrypoint import CollectEndpointTarget, Entrypoint
 
 
