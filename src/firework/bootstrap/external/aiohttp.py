@@ -6,7 +6,7 @@ try:
     from aiohttp import ClientSession, ClientTimeout
 except ImportError as e:
     raise ImportError(
-        "dependency 'aiohttp' is required for aiohttp client service\nplease install it or install 'graia-amnesia[aiohttp]'"
+        "dependency 'aiohttp' is required for aiohttp client service\nplease install it or install 'firework-spark[aiohttp]'"
     ) from e
 
 
