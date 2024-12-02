@@ -28,7 +28,7 @@ def main(lab: Annotated[str | None, typer.Argument()] = None):
 
     typer.echo(f"Running lab {lab}")
 
-    result = subprocess.run(
+    result = subprocess.run(  # noqa: S603
         [sys.executable, str(target)],
         check=True,
         stdin=sys.stdin,
