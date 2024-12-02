@@ -6,60 +6,18 @@ authors = [
     {name = "Elaina", email = "GreyElaina@outlook.com"},
 ]
 dependencies = [
-    # Common
-    "loguru>=0.7.2",
     "exceptiongroup>=1.2.2",
     "typing-extensions>=4.12.2",
     "importlib-resources>=6.4.5;python_version>='3.10' and python_version<='3.11'",
-    # ---
-
-    # Sistana = <firework.framework.command.core>
-    # Credits: Elaina; Tarraint
+    "importlib-metadata>=8.5.0",
+    "loguru>=0.7.2",
     "elaina-segment>=0.4.0",
     "tarina>=0.6.3",
-    # ---
-
-    # Yanagi = <firework.framework.command>
-    # Credits: Elaina
-    # ---
-
-    # Flywheel = <firework.entrypoint>
-    # Credits: Elaina
-    # ---
-
-    # Nekobox = <firework.backend.lagrange>
-    # Credits: wyapx; Tarraint; linwenxuan; Elaina, ...
-    # ---
-
-    # Kayaku = <firework.config>
-    # Credits: BlueGlassBlock; Elaina
     "lark[regex]>=1.2.2",
-    # ---
-
-    # Luma = <firework.cli>
-    # Credits: BlueGlassBlock, Elaina
-    "importlib-metadata>=8.5.0",
     "tomlkit>=0.13.2",
     "jsonschema>=4.23.0",
     "dacite>=1.8.1",
     "prompt-toolkit>=3.0.48",
-    # ---
-
-    # Launart = <firework.bootstrap>
-    # Credits: Elaina; BlueGlassBlock; ProgramRipper; Tarraint
-    # ---
-
-    # Amnesia = <firework.framework.core>, <firework.bootstrap.external>
-    # Credits: Elaina; BlueGlassBlock; ProgramRipper; Tarraint
-    # ---
-
-    # Saya = <firework.framework.modular>
-    # Credits: Elaina; BlueGlassBlock; ProgramRipper; Tarraint
-    # ---
-
-    # Avilla = <firework.framework.core>
-    # Credits: Elaina; BlueGlassBlock; ProgramRipper; Tarraint
-    # ---
 ]
 requires-python = ">=3.11"
 readme = "README.md"
