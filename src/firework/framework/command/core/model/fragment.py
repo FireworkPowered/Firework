@@ -14,6 +14,7 @@ class Fragment:
     name: str
     variadic: bool = False
     default: Maybe[Any] = None
+    default_factory: Callable[[], Any] | None = None
 
     separators: str | None = None
     hybrid_separators: bool = True

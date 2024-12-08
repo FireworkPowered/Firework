@@ -41,8 +41,11 @@ class Track:
             return
 
         for frag in self.fragments[self.cursor :]:
-            if frag.name not in mix.assignes and frag.default is not None:
-                mix.assignes[frag.name] = frag.default.value
+            if frag.name not in mix.assignes:
+                if frag.default is not None:
+                    mix.assignes[frag.name] = frag.default.value
+                elif frag.default_factory is not None:
+                    mix.assignes[frag.name] = frag.default_factory()
 
         last = self.fragments[-1]
         if last.variadic and last.name not in mix.assignes:
