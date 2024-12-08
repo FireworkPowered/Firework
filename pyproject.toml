@@ -142,6 +142,11 @@ mypy-init-return = true
 [tool.ruff.lint.flake8-builtins]
 builtins-ignorelist = ["id"]
 
+[tool.ruff.extend-per-file-ignores]
+"zlab/*.py" = [
+    "T201"  # print 怎么你了
+]
+
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
