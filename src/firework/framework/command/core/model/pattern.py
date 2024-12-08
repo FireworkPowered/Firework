@@ -34,7 +34,7 @@ class SubcommandPattern:
     _exit_options: list[str] = field(default_factory=list)
 
     _subcommands_bind: MutableMapping[str, SubcommandPattern] = field(default_factory=dict)
-    _options_bind: MutableMapping[str, OptionPattern] = field(default_factory=dict)
+    # _options_bind: MutableMapping[str, OptionPattern] = field(default_factory=dict)
 
     _compact_keywords: Trie[str] | None = field(default=None)
 
@@ -50,7 +50,7 @@ class SubcommandPattern:
         soft_keyword: bool = False,
         header_fragment: Fragment | None = None,
         subcommands_bind: MutableMapping[str, SubcommandPattern] | None = None,
-        options_bind: MutableMapping[str, OptionPattern] | None = None,
+        # options_bind: MutableMapping[str, OptionPattern] | None = None,
     ):
         preset = Preset(Track(fragments, header=header_fragment), {})
         subcommand = cls(
@@ -62,7 +62,7 @@ class SubcommandPattern:
             soft_keyword=soft_keyword,
             header_fragment=header_fragment,
             _subcommands_bind=subcommands_bind or {},
-            _options_bind=options_bind or {},
+            # _options_bind=options_bind or {},
         )
 
         if prefixes:
@@ -148,7 +148,7 @@ class SubcommandPattern:
         elif hybrid_separators:
             separators = separators + self.separators
 
-        pattern = self._options_bind[keyword] = OptionPattern(
+        pattern = OptionPattern(
             keyword,
             aliases=list(aliases),
             separators=separators,
@@ -158,9 +158,8 @@ class SubcommandPattern:
             header_separators=header_separators,
             compact_header=compact_header,
         )
-        for alias in aliases:
-            self._options_bind[alias] = pattern
 
+        # FIXME: get_option
         self._options.append(pattern)
         self._add_option_track(keyword, fragments, header=header_fragment)
 

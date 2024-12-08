@@ -164,6 +164,7 @@ class YanagiCommand:
     # Sistana Bindings
     __sistana_subcommands_bind__: ClassVar[ChainMap[str, SubcommandPattern]]
     __sistana_options_bind__: ClassVar[ChainMap[str, OptionPattern]]
+    # __sistana_options__: ClassVar[[OptionPattern]]
 
     def __init_subclass__(
         cls,
@@ -364,13 +365,11 @@ class YanagiCommand:
             enter_instantly=command_meta.enter_instantly,
             header_fragment=command_header_fragment_sistana,
             subcommands_bind=ChainMap({}, GLBOAL_SUBCOMMANDS),
-            options_bind=ChainMap({}, GLOBAL_OPTIONS_BIND),
+            # options_bind=ChainMap({}, GLOBAL_OPTIONS_BIND),
         )
 
         # Bind structure on the class.
         cls.__sistana_subcommands_bind__ = command_pattern._subcommands_bind  # type: ignore
-        cls.__sistana_options_bind__ = command_pattern._options_bind  # type: ignore
-        cls.__sistana_options__ = command_pattern._options
 
         # Create "real" options on the command pattern.
         for option_meta, fragments in options_sistana.items():
@@ -387,6 +386,10 @@ class YanagiCommand:
                 forwarding=option_meta.forwarding,
                 header_fragment=option_headers_sistana.get(option_meta),
             )
+
+        # FIXME: a tricky way, expects that the command pattern is already built and no change will be made later.
+        #        only refactor sistana/core to support this kind of pattern.
+        command_pattern._options = ChainMap({i.keyword: i for i in command_pattern._options}, GLOBAL_OPTIONS_BIND).values()  # type: ignore
 
         return command_pattern
 
