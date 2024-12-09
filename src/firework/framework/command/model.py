@@ -25,10 +25,14 @@ UNION_METADATA_IDENT = "yanagi_union"
 
 FieldTwin: TypeAlias = "tuple[Field[Any], FragmentMetadata]"
 
-YANAGI_CURRENT_OPTION: ContextVar[OptionMetadata | None] = ContextVar("YANAGI_CURRENT_OPTION", default=None)
-
 GLBOAL_SUBCOMMANDS: ChainMap[str, SubcommandPattern] = ChainMap()
 GLOBAL_OPTIONS_BIND: ChainMap[str, OptionPattern] = ChainMap()
+
+YANAGI_CURRENT_OPTION: ContextVar[OptionMetadata | None] = ContextVar("YANAGI_CURRENT_OPTION", default=None)
+YANAGI_INHERITED_SUBCOMMANDS: ContextVar[ChainMap[str, SubcommandPattern] | None] = ContextVar(
+    "YANAGI_INHERITED_SUBCOMMANDS", default=None
+)
+YANAGI_INHERITED_OPTIONS: ContextVar[ChainMap[str, OptionPattern] | None] = ContextVar("YANAGI_INHERITED_OPTIONS", default=None)
 
 
 @dataclass
@@ -237,11 +241,23 @@ class YanagiCommandBase:
 
     @classmethod
     def _subcommands_bind_factory(cls):
-        return ChainMap({}, GLBOAL_SUBCOMMANDS)
+        inherited = YANAGI_INHERITED_SUBCOMMANDS.get()
+        result = ChainMap({}, GLBOAL_SUBCOMMANDS)
+
+        if inherited is not None:
+            result.maps.insert(1, inherited)
+
+        return result
 
     @classmethod
     def _options_bind_factory(cls, options: list[OptionPattern]):
-        return ChainMap({i.keyword: i for i in options}, GLOBAL_OPTIONS_BIND)
+        inherited = YANAGI_INHERITED_OPTIONS.get()
+        result = ChainMap({i.keyword: i for i in options}, GLOBAL_OPTIONS_BIND)
+
+        if inherited is not None:
+            result.maps.insert(1, inherited)
+
+        return result
 
     @classmethod
     def _sistana_fragment_factory(cls, dc_field: Field, metadata: FragmentMetadata):
