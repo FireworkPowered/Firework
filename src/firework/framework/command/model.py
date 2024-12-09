@@ -174,11 +174,14 @@ def _default_fragment_factory():
 
 
 class YanagiCommandBase:
+    # Instance Variables
     __sistana_snapshot__: AnalyzeSnapshot
 
+    # Yanagi Model Metadata
     __yanagi_subcommand_metadata__: ClassVar[SubcommandMetadata]
     __yanagi_mangled_names__: ClassVar[dict[str, str]]
 
+    # Sistana Pattern
     __sistana_pattern__: ClassVar[SubcommandPattern]
 
     # Sistana Bindings
@@ -219,6 +222,8 @@ class YanagiCommandBase:
         elif dc_field.default_factory is not MISSING:
             f.default_factory = dc_field.default_factory
 
+        cls.__yanagi_mangled_names__[f.name] = dc_field.name
+
         return f
 
     @classmethod
@@ -239,8 +244,8 @@ class YanagiCommandBase:
         # Split fields into command fragments and option fragments.
         command_header_fragment: FieldTwin | None = None
         command_fragments: list[FieldTwin] = []
-        option_fragments_map: dict[OptionMetadata, list[FieldTwin]] = {}
         option_headers: dict[OptionMetadata, FieldTwin] = {}
+        option_fragments_map: dict[OptionMetadata, list[FieldTwin]] = {}
 
         for dc_field in fields:
             if METADATA_IDENT not in dc_field.metadata:
@@ -275,14 +280,12 @@ class YanagiCommandBase:
 
         # Build Sistana fragments
 
-        # 1) Fragments on Command Track
-        command_fragments_sistana: list[Fragment] = []
-        mangled_names = cls.__yanagi_mangled_names__ = {}
+        # 0) Mangled Names, to avoid fragment assignes conflict among different models.
+        cls.__yanagi_mangled_names__ = {}
 
-        def _mangle_name(name: str):
-            mangled = cls._mangle_name(name)
-            mangled_names[mangled] = name
-            return mangled
+        # 1) Fragments on Command Track
+
+        command_fragments_sistana: list[Fragment] = []
 
         for dc_field, fragment_meta in command_fragments:
             command_fragments_sistana.append(cls._sistana_fragment_factory(dc_field, fragment_meta))
