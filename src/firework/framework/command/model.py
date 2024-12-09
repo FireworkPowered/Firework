@@ -179,7 +179,6 @@ class YanagiCommand:
 
     __yanagi_subcommand_metadata__: ClassVar[SubcommandMetadata]
     __yanagi_mangled_names__: ClassVar[dict[str, str]]
-    # mangle rules: _{class_name}__{field_name} -> field_name
 
     __sistana_pattern__: ClassVar[SubcommandPattern]
 
@@ -198,6 +197,8 @@ class YanagiCommand:
         compact_header: bool = False,
         enter_instantly: bool = False,
     ) -> None:
+        dataclass(cls)  # Ensure cls is a dataclass
+
         cls.__yanagi_subcommand_metadata__ = SubcommandMetadata(
             keyword=keyword,
             prefixes=prefixes,
