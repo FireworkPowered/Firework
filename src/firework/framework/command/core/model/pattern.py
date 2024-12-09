@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING, Iterable, MutableMapping
 from elaina_segment import SEPARATORS
 from tarina.trie import CharTrie, Trie
 
-from firework.util import safe_dcls_kw
-
 from .fragment import assert_fragments_order
 from .mix import Preset, Track
 from .snapshot import AnalyzeSnapshot, ProcessingState
@@ -17,7 +15,7 @@ if TYPE_CHECKING:
     from .fragment import Fragment
 
 
-@dataclass(**safe_dcls_kw(slots=True))
+@dataclass
 class SubcommandPattern:
     header: str
     preset: Preset
@@ -25,9 +23,11 @@ class SubcommandPattern:
     soft_keyword: bool = False
     separators: str = SEPARATORS
 
+    aliases: list[str] = field(default_factory=list)
     prefixes: Trie[str] | None = field(default=None)
     compact_header: bool = False
     enter_instantly: bool = False
+    compact_aliases: bool = False
     header_fragment: Fragment | None = None
 
     _options: list[OptionPattern] = field(default_factory=list)
@@ -52,6 +52,9 @@ class SubcommandPattern:
         subcommands_bind: MutableMapping[str, SubcommandPattern] | None = None,
         # options_bind: MutableMapping[str, OptionPattern] | None = None,
     ):
+        if subcommands_bind is None:
+            subcommands_bind = {}
+
         preset = Preset(Track(fragments, header=header_fragment), {})
         subcommand = cls(
             header=header,
@@ -61,8 +64,7 @@ class SubcommandPattern:
             separators=separators,
             soft_keyword=soft_keyword,
             header_fragment=header_fragment,
-            _subcommands_bind=subcommands_bind or {},
-            # _options_bind=options_bind or {},
+            _subcommands_bind=subcommands_bind,
         )
 
         if prefixes:
@@ -105,25 +107,32 @@ class SubcommandPattern:
         header_fragment: Fragment | None = None,
     ):
         preset = Preset(Track(fragments, header=header_fragment), {})
-        pattern = self._subcommands_bind[header] = SubcommandPattern(
+        pattern = SubcommandPattern(
             header=header,
             preset=preset,
+            aliases=list(aliases),
             soft_keyword=soft_keyword,
             separators=separators,
             compact_header=compact_header,
+            compact_aliases=compact_aliases,
             enter_instantly=enter_instantly,
             header_fragment=header_fragment,
         )
-        for alias in aliases:
+
+        return self.subcommand_from_pattern(pattern)
+
+    def subcommand_from_pattern(self, pattern: SubcommandPattern):
+        self._subcommands_bind[pattern.header] = pattern
+        for alias in pattern.aliases:
             self._subcommands_bind[alias] = pattern
 
-        if compact_header:
+        if pattern.compact_header:
             self._compact_keywords = CharTrie.fromkeys(
                 [
-                    header,
-                    *aliases,
+                    pattern.header,
+                    *pattern.aliases,
                     *(self._compact_keywords or []),
-                    *(aliases if compact_aliases else []),
+                    *(pattern.aliases if pattern.compact_header else []),
                 ]
             )  # type: ignore
 
@@ -157,6 +166,7 @@ class SubcommandPattern:
             header_fragment=header_fragment,
             header_separators=header_separators,
             compact_header=compact_header,
+            forwarding=forwarding,
         )
 
         # FIXME: get_option
@@ -183,6 +193,7 @@ class OptionPattern:
     header_fragment: Fragment | None = None
     header_separators: str | None = None
     compact_header: bool = False
+    forwarding: bool = True
 
     @cached_property
     def _trigger(self):

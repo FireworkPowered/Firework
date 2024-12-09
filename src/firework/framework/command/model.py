@@ -116,7 +116,6 @@ def fragment(
     is_header: bool = False,
     default: Any = MISSING,
     default_factory: Callable[[], Any] = MISSING,  # type: ignore
-    # NOTE: Sistana does not support default factory natively.
 ):
     return field(
         default=default,
@@ -145,6 +144,9 @@ def header_fragment(
         hybrid_separators=hybrid_separators,
         is_header=True,
     )
+
+
+# TODO: more useful field specifiers, which compares to argparse's functions
 
 
 def _default_fragment_factory():
@@ -184,6 +186,7 @@ class YanagiCommand:
             compact_header=compact_header,
             enter_instantly=enter_instantly,
         )
+        cls.__sistana_subcommands_bind__ = ChainMap({}, GLBOAL_SUBCOMMANDS)
 
     @classmethod
     def _mangle_name(cls, name: str):
@@ -217,6 +220,7 @@ class YanagiCommand:
             fragment_meta: FragmentMetadata = dc_field.metadata[METADATA_IDENT]
 
             if fragment_meta.owned_option is None:
+                # Subcommand Header Fragment
                 if fragment_meta.is_header:
                     if command_header_fragment is not None:
                         raise AttributeError("Header fragment is already defined for the command")
@@ -231,6 +235,7 @@ class YanagiCommand:
                 else:
                     option_fragments = option_fragments_map[fragment_meta.owned_option]
 
+                # Option Header Fragment
                 if fragment_meta.is_header:
                     if fragment_meta.owned_option in option_headers:
                         raise AttributeError("Header fragment is already defined for the option")
@@ -364,12 +369,9 @@ class YanagiCommand:
             compact_header=command_meta.compact_header,
             enter_instantly=command_meta.enter_instantly,
             header_fragment=command_header_fragment_sistana,
-            subcommands_bind=ChainMap({}, GLBOAL_SUBCOMMANDS),
-            # options_bind=ChainMap({}, GLOBAL_OPTIONS_BIND),
+            subcommands_bind=cls.__sistana_subcommands_bind__,
         )
-
-        # Bind structure on the class.
-        cls.__sistana_subcommands_bind__ = command_pattern._subcommands_bind  # type: ignore
+        command_pattern.__yanagi_model__ = cls  # type: ignore
 
         # Create "real" options on the command pattern.
         for option_meta, fragments in options_sistana.items():
@@ -405,12 +407,28 @@ class YanagiCommand:
         if reason != LoopflowExitReason.satisfied:
             raise ValueError(f"Command analysis failed: {reason}")
 
-        assignes = {}
+        command_models: list[YanagiCommand] = []
+        current_command_model_cls = cls
 
-        for k in snapshot.mix.assignes.copy():
-            if k in cls.__yanagi_mangled_names__:
-                assignes[cls.__yanagi_mangled_names__[k]] = snapshot.mix.assignes.pop(k)
+        for command_node in snapshot.command:
+            if command_models:
+                current_command_model_cls: type[YanagiCommand] = current_command_model_cls.__sistana_subcommands_bind__[
+                    command_node
+                ].__yanagi_model__  # type: ignore
 
-        result = cls(**assignes)
-        result.__sistana_snapshot__ = snapshot
-        return result
+            assignes = {}
+
+            for k in list(snapshot.mix.assignes):
+                if k in current_command_model_cls.__yanagi_mangled_names__:
+                    assignes[current_command_model_cls.__yanagi_mangled_names__[k]] = snapshot.mix.assignes.pop(k)
+
+            model = current_command_model_cls(**assignes)
+            model.__sistana_snapshot__ = snapshot
+            command_models.append(model)
+
+        return tuple(command_models)
+
+    @classmethod
+    def register_to(cls, command: type[YanagiCommand]):
+        command.get_command_pattern().subcommand_from_pattern(cls.get_command_pattern())
+        return cls
