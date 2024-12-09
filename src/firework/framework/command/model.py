@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import MISSING, Field, dataclass, field, is_dataclass
 from dataclasses import fields as dc_fields
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterable, TypeAlias, dataclass_transform
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterable, TypeAlias, cast, dataclass_transform
 
 from elaina_segment import SEPARATORS, Buffer
 
@@ -20,7 +20,8 @@ if TYPE_CHECKING:
     from .core.model.capture import Capture
     from .core.model.receiver import Rx
 
-METADATA_IDENT = "yanagi_metadata"
+FRAGMENT_METADATA_IDENT = "yanagi_fragment"
+UNION_METADATA_IDENT = "yanagi_union"
 
 FieldTwin: TypeAlias = "tuple[Field[Any], FragmentMetadata]"
 
@@ -43,6 +44,36 @@ class FragmentMetadata:
     receiver: Rx[Any] | None = None
     validator: Callable[[Any], bool] | None = None
     transformer: Callable[[Any], Any] | None = None
+
+    @staticmethod
+    def get(dc_field: Field):
+        if FRAGMENT_METADATA_IDENT not in dc_field.metadata:
+            raise AttributeError("Fragment metadata is not found")
+
+        return dc_field.metadata[FRAGMENT_METADATA_IDENT]
+
+    @classmethod
+    def build_default(cls):
+        return cls()
+
+    @staticmethod
+    def get_or_default(dc_field: Field):
+        if FRAGMENT_METADATA_IDENT not in dc_field.metadata:
+            return FragmentMetadata.build_default()
+
+        return dc_field.metadata[FRAGMENT_METADATA_IDENT]
+
+
+@dataclass
+class UnionMetadata:
+    twins: list[FieldTwin]
+
+    @staticmethod
+    def get(dc_field: Field) -> UnionMetadata | None:
+        if UNION_METADATA_IDENT not in dc_field.metadata:
+            return
+
+        return dc_field.metadata[UNION_METADATA_IDENT]
 
 
 @dataclass
@@ -125,7 +156,7 @@ def fragment(
         default=default,
         default_factory=default_factory,
         metadata={
-            METADATA_IDENT: FragmentMetadata(
+            FRAGMENT_METADATA_IDENT: FragmentMetadata(
                 variadic=variadic,
                 separators=separators,
                 hybrid_separators=hybrid_separators,
@@ -166,11 +197,14 @@ def header_fragment(
     )
 
 
-# TODO: more useful field specifiers, which compares to argparse's functions
-
-
-def _default_fragment_factory():
-    return FragmentMetadata()
+def fragment_union(*fragment_fields: Field):
+    return field(
+        metadata={
+            UNION_METADATA_IDENT: UnionMetadata(
+                twins=[(f, FragmentMetadata.get(f)) for f in fragment_fields],
+            )
+        }
+    )
 
 
 class YanagiCommandBase:
@@ -242,16 +276,13 @@ class YanagiCommandBase:
         fields = dc_fields(cls)
 
         # Split fields into command fragments and option fragments.
-        command_header_fragment: FieldTwin | None = None
+        command_header_fragment = cast("FieldTwin | None", None)
         command_fragments: list[FieldTwin] = []
         option_headers: dict[OptionMetadata, FieldTwin] = {}
         option_fragments_map: dict[OptionMetadata, list[FieldTwin]] = {}
 
-        for dc_field in fields:
-            if METADATA_IDENT not in dc_field.metadata:
-                fragment_meta = _default_fragment_factory()
-
-            fragment_meta: FragmentMetadata = dc_field.metadata[METADATA_IDENT]
+        def _unpack_field_metadata(dc_field: Field, fragment_meta: FragmentMetadata):
+            nonlocal command_header_fragment, command_fragments, option_headers, option_fragments_map
 
             if fragment_meta.owned_option is None:
                 # Subcommand Header Fragment
@@ -278,6 +309,18 @@ class YanagiCommandBase:
                 else:
                     option_fragments.append((dc_field, fragment_meta))
 
+        for dc_field in fields:
+            union_guess = UnionMetadata.get(dc_field)
+
+            if union_guess is not None:
+                for field_ref, fragment_meta in union_guess.twins:
+                    field_ref.name = dc_field.name
+
+                    _unpack_field_metadata(field_ref, fragment_meta)
+            else:
+                fragment_meta = FragmentMetadata.get_or_default(dc_field)
+                _unpack_field_metadata(dc_field, fragment_meta)
+
         # Build Sistana fragments
 
         # 0) Mangled Names, to avoid fragment assignes conflict among different models.
@@ -285,21 +328,17 @@ class YanagiCommandBase:
 
         # 1) Fragments on Command Track
 
-        command_fragments_sistana: list[Fragment] = []
-
-        for dc_field, fragment_meta in command_fragments:
-            command_fragments_sistana.append(cls._sistana_fragment_factory(dc_field, fragment_meta))
+        command_fragments_sistana: list[Fragment] = [
+            cls._sistana_fragment_factory(dc_field, fragment_meta) for dc_field, fragment_meta in command_fragments
+        ]
 
         # 2) Fragments on Option Track
         options_sistana: dict[OptionMetadata, list[Fragment]] = {}
 
         for option_meta, option_fragments in option_fragments_map.items():
-            option_fragments_sistana: list[Fragment] = []
-
-            for dc_field, fragment_meta in option_fragments:
-                option_fragments_sistana.append(cls._sistana_fragment_factory(dc_field, fragment_meta))
-
-            options_sistana[option_meta] = option_fragments_sistana
+            options_sistana[option_meta] = [
+                cls._sistana_fragment_factory(dc_field, fragment_meta) for dc_field, fragment_meta in option_fragments
+            ]
 
         # 3) Option Header Fragments
         option_headers_sistana: dict[OptionMetadata, Fragment] = {}
@@ -363,7 +402,7 @@ class YanagiCommandBase:
         reason = analyze_loopflow(snapshot, buffer)
 
         if reason != LoopflowExitReason.satisfied:
-            raise ValueError(f"Command analysis failed: {reason}")
+            raise ValueError(f"Command analysis failed (reason = {reason})")
 
         command_models: dict[type[YanagiCommandBase], YanagiCommandBase] = {}
         current_command_model_cls = cls
@@ -392,7 +431,8 @@ class YanagiCommandBase:
         return cls
 
 
-@dataclass_transform(field_specifiers=(fragment, header_fragment))
+# NOTE: field specifiers should be updated when new added.
+@dataclass_transform(field_specifiers=(fragment, header_fragment, fragment_union))
 class YanagiCommand(YanagiCommandBase):
     def __init_subclass__(
         cls,
