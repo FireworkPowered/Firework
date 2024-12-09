@@ -75,13 +75,13 @@ class Track:
             val, tail, token = frag.capture.capture(buffer, separators)
 
             if frag.validator is not None and not frag.validator(val):
-                raise ValidateRejected
+                raise ValidateRejected(f"Validation failed for {frag.name}, got {val}")
 
             if frag.transformer is not None:
                 try:
                     val = frag.transformer(val)
                 except Exception as e:
-                    raise TransformPanic from e
+                    raise TransformPanic(f"Failed to transform {frag.name} via {frag.transformer}, got {val}") from e
 
             return val
 
@@ -141,13 +141,13 @@ class Track:
 
         def rxfetch():
             if header.validator is not None and not header.validator(segment):
-                raise ValidateRejected
+                raise ValidateRejected(f"Validation failed for {header.name}, got {segment}")
 
             if header.transformer is not None:
                 try:
                     return header.transformer(segment)
                 except Exception as e:
-                    raise TransformPanic from e
+                    raise TransformPanic(f"Failed to transform {header.name} via {header.transformer}, got {segment}") from e
 
             return segment
 
