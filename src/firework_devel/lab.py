@@ -30,7 +30,7 @@ def main(lab: Annotated[str | None, typer.Argument()] = None):
 
     result = subprocess.run(  # noqa: S603
         [sys.executable, str(target)],
-        check=True,
+        check=False,
         stdin=sys.stdin,
         stdout=sys.stdout,
         stderr=sys.stderr,
