@@ -75,6 +75,13 @@ class UnionMetadata:
 
         return dc_field.metadata[UNION_METADATA_IDENT]
 
+    @staticmethod
+    def get_strict(dc_field: Field) -> UnionMetadata:
+        if UNION_METADATA_IDENT not in dc_field.metadata:
+            raise AttributeError("Union metadata is not found")
+
+        return dc_field.metadata[UNION_METADATA_IDENT]
+
 
 @dataclass
 class SubcommandMetadata:
@@ -198,13 +205,15 @@ def header_fragment(
 
 
 def fragment_union(*fragment_fields: Field):
-    return field(
-        metadata={
-            UNION_METADATA_IDENT: UnionMetadata(
-                twins=[(f, FragmentMetadata.get(f)) for f in fragment_fields],
-            )
-        }
-    )
+    twins = []
+
+    for dc_field in fragment_fields:
+        if UNION_METADATA_IDENT in dc_field.metadata:
+            twins.extend(UnionMetadata.get_strict(dc_field).twins)
+        else:
+            twins.append((dc_field, FragmentMetadata.get(dc_field)))
+
+    return field(metadata={UNION_METADATA_IDENT: UnionMetadata(twins=twins)})
 
 
 class YanagiCommandBase:
