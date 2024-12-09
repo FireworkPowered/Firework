@@ -394,7 +394,7 @@ class YanagiCommand:
             )
 
         # FIXME: a tricky way, expects that the command pattern is already built and no change will be made later.
-        #        only refactor sistana/core to support this kind of pattern.
+        #        only refactor sistana/core to support this usage.
         command_pattern._options = ChainMap({i.keyword: i for i in command_pattern._options}, GLOBAL_OPTIONS_BIND).values()  # type: ignore
 
         return command_pattern

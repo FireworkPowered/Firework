@@ -125,12 +125,14 @@ class AnalyzeSnapshot:
         exit_options = pattern._exit_options
 
         self._pending_options = [
-            (option, owner, triggers, separators)
+            (option, option_owner, triggers, separators)
             for option, option_owner, triggers, separators in self._pending_options
             if not (owner == option_owner and option.keyword in exit_options)
+            # When updating owner is current owner, check if the option should be removed
         ] + [
             (option, owner, option._trigger, option.header_separators)  # type: ignore
             for option in pattern._options
+            # Update with new options
         ]
 
     def get_subcommand(self, context: SubcommandPattern, val: str):
