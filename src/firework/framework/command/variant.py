@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import MISSING
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from elaina_segment import SEPARATORS
 
-from .core.model.receiver import AddRx, CountRx
-from .model import fragment, header_fragment, option
+from .core.model.receiver import AddRx, CountRx, Rx
+from .model import fragment, fragment_union, header_fragment, option
+
+if TYPE_CHECKING:
+    from .core.model.capture import Capture
 
 
 def constant_option(
@@ -145,4 +148,46 @@ def level_short_option(
         forwarding=forwarding,
         hybrid_separators=hybrid_separators,
     ):
-        return fragment(default=0, validator=validator, transformer=lambda x: len(x), receiver=AddRx())
+        return fragment_union(
+            header_fragment(default=0, transformer=lambda _: 0, receiver=AddRx()),
+            fragment(default=0, validator=validator, transformer=lambda x: len(x), receiver=AddRx()),
+        )
+
+
+def single_slot_option(
+    keyword: str,
+    default: Any = MISSING,
+    default_factory: Callable[[], Any] = MISSING,  # type: ignore
+    aliases: list[str] | None = None,
+    separators: str = SEPARATORS,
+    header_separators: str | None = "=",
+    capture: Capture | None = None,
+    receiver: Rx[Any] | None = None,
+    validator: Callable[[Any], bool] | None = None,
+    transformer: Callable[[Any], Any] | None = None,
+    *,
+    allow_duplicate: bool = False,
+    soft_keyword: bool = False,
+    compact_header: bool = False,
+    forwarding: bool = True,
+    hybrid_separators: bool = True,
+):
+    with option(
+        keyword,
+        aliases,
+        separators,
+        header_separators,
+        soft_keyword=soft_keyword,
+        compact_header=compact_header,
+        allow_duplicate=allow_duplicate,
+        forwarding=forwarding,
+        hybrid_separators=hybrid_separators,
+    ):
+        return fragment(
+            default=default,
+            default_factory=default_factory,
+            capture=capture,
+            receiver=receiver,
+            validator=validator,
+            transformer=transformer,
+        )
