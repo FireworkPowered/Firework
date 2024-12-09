@@ -206,7 +206,7 @@ class YanagiCommand:
             compact_header=compact_header,
             enter_instantly=enter_instantly,
         )
-        cls.__sistana_subcommands_bind__ = cls._subcommand_bind_factory()
+        cls.get_command_pattern()
 
     @classmethod
     def _mangle_name(cls, name: str):
@@ -388,6 +388,8 @@ class YanagiCommand:
 
         # Build Sistana Command Pattern
         command_meta = cls.__yanagi_subcommand_metadata__
+
+        cls.__sistana_subcommands_bind__ = cls._subcommand_bind_factory()
         cls.__sistana_pattern__ = command_pattern = SubcommandPattern.build(
             command_meta.keyword,
             *command_fragments_sistana,
