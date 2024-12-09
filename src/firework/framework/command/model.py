@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import MISSING, Field, dataclass, field, is_dataclass
 from dataclasses import fields as dc_fields
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterable, TypeAlias, dataclass_transform
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterable, MutableMapping, TypeAlias, dataclass_transform
 
 from elaina_segment import SEPARATORS, Buffer
 
@@ -206,11 +206,19 @@ class YanagiCommand:
             compact_header=compact_header,
             enter_instantly=enter_instantly,
         )
-        cls.__sistana_subcommands_bind__ = ChainMap({}, GLBOAL_SUBCOMMANDS)
+        cls.__sistana_subcommands_bind__ = cls._subcommand_bind_factory()
 
     @classmethod
     def _mangle_name(cls, name: str):
         return f"_{cls.__name__}__{name}"
+
+    @classmethod
+    def _subcommand_bind_factory(cls):
+        return ChainMap({}, GLBOAL_SUBCOMMANDS)
+
+    @classmethod
+    def _options_bind_factory(cls, options_bind: MutableMapping[str, OptionPattern]):
+        return ChainMap(options_bind, GLOBAL_OPTIONS_BIND)
 
     @classmethod
     def get_command_pattern(cls):
@@ -411,7 +419,7 @@ class YanagiCommand:
 
         # FIXME: a tricky way, expects that the command pattern is already built and no change will be made later.
         #        only refactor sistana/core to support this usage.
-        command_pattern._options = ChainMap({i.keyword: i for i in command_pattern._options}, GLOBAL_OPTIONS_BIND).values()  # type: ignore
+        command_pattern._options = cls._options_bind_factory(command_pattern._options).values()  # type: ignore
 
         return command_pattern
 
