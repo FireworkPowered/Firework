@@ -145,6 +145,8 @@ class AnalyzeSnapshot:
                 return context._subcommands_bind[prefix], val[len(prefix) :]
 
     def get_option(self, val: str):
+        split_cache = {}
+
         for option, owner, triggers, separator in self._pending_options:
             if option.compact_header:
                 prefix = triggers.longest_prefix(val).key  # type: ignore
@@ -154,6 +156,10 @@ class AnalyzeSnapshot:
                 return option, owner, None
 
             if separator is not None:
-                keyword, *tail = val.split(separator, 1)
+                if separator in split_cache:
+                    keyword, *tail = split_cache[separator]
+                else:
+                    keyword, *tail = split_cache[separator] = val.split(separator, 1)
+
                 if keyword in triggers:
                     return option, owner, tail[0] if tail else None
