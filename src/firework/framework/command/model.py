@@ -110,12 +110,12 @@ def option(
 
 def fragment(
     *,
+    default: Any = MISSING,
+    default_factory: Callable[[], Any] = MISSING,  # type: ignore
     variadic: bool = False,
     separators: str | None = None,
     hybrid_separators: bool = True,
     is_header: bool = False,
-    default: Any = MISSING,
-    default_factory: Callable[[], Any] = MISSING,  # type: ignore
 ):
     return field(
         default=default,
@@ -134,11 +134,15 @@ def fragment(
 
 def header_fragment(
     *,
+    default: Any = MISSING,
+    default_factory: Callable[[], Any] = MISSING,  # type: ignore
     variadic: bool = False,
     separators: str | None = None,
     hybrid_separators: bool = True,
 ):
     return fragment(
+        default=default,
+        default_factory=default_factory,
         variadic=variadic,
         separators=separators,
         hybrid_separators=hybrid_separators,
