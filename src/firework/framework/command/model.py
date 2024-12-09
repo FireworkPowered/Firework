@@ -173,8 +173,7 @@ def _default_fragment_factory():
     return FragmentMetadata()
 
 
-@dataclass_transform(field_specifiers=(fragment, header_fragment))
-class YanagiCommand:
+class YanagiCommandBase:
     __sistana_snapshot__: AnalyzeSnapshot
 
     __yanagi_subcommand_metadata__: ClassVar[SubcommandMetadata]
@@ -185,29 +184,6 @@ class YanagiCommand:
     # Sistana Bindings
     __sistana_subcommands_bind__: ClassVar[ChainMap[str, SubcommandPattern]]
     __sistana_options_bind__: ClassVar[ChainMap[str, OptionPattern]]
-    # __sistana_options__: ClassVar[[OptionPattern]]
-
-    def __init_subclass__(
-        cls,
-        *,
-        keyword: str,
-        prefixes: Iterable[str] = (),
-        separators: str = SEPARATORS,
-        soft_keyword: bool = False,
-        compact_header: bool = False,
-        enter_instantly: bool = False,
-    ) -> None:
-        dataclass(cls)  # Ensure cls is a dataclass
-
-        cls.__yanagi_subcommand_metadata__ = SubcommandMetadata(
-            keyword=keyword,
-            prefixes=prefixes,
-            separators=separators,
-            soft_keyword=soft_keyword,
-            compact_header=compact_header,
-            enter_instantly=enter_instantly,
-        )
-        cls.get_command_pattern()
 
     @classmethod
     def _mangle_name(cls, name: str):
@@ -438,12 +414,12 @@ class YanagiCommand:
         if reason != LoopflowExitReason.satisfied:
             raise ValueError(f"Command analysis failed: {reason}")
 
-        command_models: list[YanagiCommand] = []
+        command_models: list[YanagiCommandBase] = []
         current_command_model_cls = cls
 
         for command_node in snapshot.command:
             if command_models:
-                current_command_model_cls: type[YanagiCommand] = current_command_model_cls.__sistana_subcommands_bind__[
+                current_command_model_cls: type[YanagiCommandBase] = current_command_model_cls.__sistana_subcommands_bind__[
                     command_node
                 ].__yanagi_model__  # type: ignore
 
@@ -460,6 +436,31 @@ class YanagiCommand:
         return tuple(command_models)
 
     @classmethod
-    def register_to(cls, command: type[YanagiCommand]):
+    def register_to(cls, command: type[YanagiCommandBase]):
         command.get_command_pattern().subcommand_from_pattern(cls.get_command_pattern())
         return cls
+
+
+@dataclass_transform(field_specifiers=(fragment, header_fragment))
+class YanagiCommand(YanagiCommandBase):
+    def __init_subclass__(
+        cls,
+        *,
+        keyword: str,
+        prefixes: Iterable[str] = (),
+        separators: str = SEPARATORS,
+        soft_keyword: bool = False,
+        compact_header: bool = False,
+        enter_instantly: bool = False,
+    ) -> None:
+        dataclass(cls)  # Ensure cls is a dataclass
+
+        cls.__yanagi_subcommand_metadata__ = SubcommandMetadata(
+            keyword=keyword,
+            prefixes=prefixes,
+            separators=separators,
+            soft_keyword=soft_keyword,
+            compact_header=compact_header,
+            enter_instantly=enter_instantly,
+        )
+        cls.get_command_pattern()
