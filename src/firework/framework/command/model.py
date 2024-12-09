@@ -198,6 +198,30 @@ class YanagiCommandBase:
         return ChainMap({i.keyword: i for i in options}, GLOBAL_OPTIONS_BIND)
 
     @classmethod
+    def _sistana_fragment_factory(cls, dc_field: Field, metadata: FragmentMetadata):
+        f = Fragment(
+            name=cls._mangle_name(dc_field.name),
+            variadic=metadata.variadic,
+            separators=metadata.separators,
+            hybrid_separators=metadata.hybrid_separators,
+            validator=metadata.validator,
+            transformer=metadata.transformer,
+        )
+
+        if metadata.capture is not None:
+            f.capture = metadata.capture
+
+        if metadata.receiver is not None:
+            f.receiver = metadata.receiver
+
+        if dc_field.default is not MISSING:
+            f.default = Some(dc_field.default)
+        elif dc_field.default_factory is not MISSING:
+            f.default_factory = dc_field.default_factory
+
+        return f
+
+    @classmethod
     def get_command_pattern(cls):
         # If pattern is already generated then return it.
         if hasattr(cls, "__sistana_pattern__"):
@@ -261,26 +285,7 @@ class YanagiCommandBase:
             return mangled
 
         for dc_field, fragment_meta in command_fragments:
-            f = Fragment(
-                name=_mangle_name(dc_field.name),
-                variadic=fragment_meta.variadic,
-                separators=fragment_meta.separators,
-                hybrid_separators=fragment_meta.hybrid_separators,
-                validator=fragment_meta.validator,
-                transformer=fragment_meta.transformer,
-            )
-            if fragment_meta.capture is not None:
-                f.capture = fragment_meta.capture
-
-            if fragment_meta.receiver is not None:
-                f.receiver = fragment_meta.receiver
-
-            if dc_field.default is not MISSING:
-                f.default = Some(dc_field.default)
-            elif dc_field.default_factory is not MISSING:
-                f.default_factory = dc_field.default_factory
-
-            command_fragments_sistana.append(f)
+            command_fragments_sistana.append(cls._sistana_fragment_factory(dc_field, fragment_meta))
 
         # 2) Fragments on Option Track
         options_sistana: dict[OptionMetadata, list[Fragment]] = {}
@@ -289,27 +294,7 @@ class YanagiCommandBase:
             option_fragments_sistana: list[Fragment] = []
 
             for dc_field, fragment_meta in option_fragments:
-                f = Fragment(
-                    name=_mangle_name(dc_field.name),
-                    variadic=fragment_meta.variadic,
-                    separators=fragment_meta.separators,
-                    hybrid_separators=fragment_meta.hybrid_separators,
-                    validator=fragment_meta.validator,
-                    transformer=fragment_meta.transformer,
-                )
-
-                if fragment_meta.capture is not None:
-                    f.capture = fragment_meta.capture
-
-                if fragment_meta.receiver is not None:
-                    f.receiver = fragment_meta.receiver
-
-                if dc_field.default is not MISSING:
-                    f.default = Some(dc_field.default)
-                elif dc_field.default_factory is not MISSING:
-                    f.default_factory = dc_field.default_factory
-
-                option_fragments_sistana.append(f)
+                option_fragments_sistana.append(cls._sistana_fragment_factory(dc_field, fragment_meta))
 
             options_sistana[option_meta] = option_fragments_sistana
 
@@ -317,51 +302,14 @@ class YanagiCommandBase:
         option_headers_sistana: dict[OptionMetadata, Fragment] = {}
 
         for option_meta, (dc_field, fragment_meta) in option_headers.items():
-            option_headers_sistana[option_meta] = f = Fragment(
-                name=_mangle_name(dc_field.name),
-                variadic=fragment_meta.variadic,
-                separators=fragment_meta.separators,
-                hybrid_separators=fragment_meta.hybrid_separators,
-                validator=fragment_meta.validator,
-                transformer=fragment_meta.transformer,
-            )
-
-            if fragment_meta.capture is not None:
-                f.capture = fragment_meta.capture
-
-            if fragment_meta.receiver is not None:
-                f.receiver = fragment_meta.receiver
-
-            if dc_field.default is not MISSING:
-                f.default = Some(dc_field.default)
-            elif dc_field.default_factory is not MISSING:
-                f.default_factory = dc_field.default_factory
+            option_headers_sistana[option_meta] = cls._sistana_fragment_factory(dc_field, fragment_meta)
 
         # 4) Subcommand Header Fragment
         command_header_fragment_sistana = None
 
         if command_header_fragment is not None:
             dc_field, fragment_meta = command_header_fragment
-
-            command_header_fragment_sistana = Fragment(
-                name=_mangle_name(dc_field.name),
-                variadic=fragment_meta.variadic,
-                separators=fragment_meta.separators,
-                hybrid_separators=fragment_meta.hybrid_separators,
-                validator=fragment_meta.validator,
-                transformer=fragment_meta.transformer,
-            )
-
-            if fragment_meta.capture is not None:
-                command_header_fragment_sistana.capture = fragment_meta.capture
-
-            if fragment_meta.receiver is not None:
-                command_header_fragment_sistana.receiver = fragment_meta.receiver
-
-            if dc_field.default is not MISSING:
-                command_header_fragment_sistana.default = Some(dc_field.default)
-            elif dc_field.default_factory is not MISSING:
-                command_header_fragment_sistana.default_factory = dc_field.default_factory
+            command_header_fragment_sistana = cls._sistana_fragment_factory(dc_field, fragment_meta)
 
         # Build Sistana Command Pattern
         command_meta = cls.__yanagi_subcommand_metadata__
