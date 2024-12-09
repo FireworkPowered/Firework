@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import MISSING, Field, dataclass, field, is_dataclass
 from dataclasses import fields as dc_fields
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterable, MutableMapping, TypeAlias, dataclass_transform
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterable, TypeAlias, dataclass_transform
 
 from elaina_segment import SEPARATORS, Buffer
 
@@ -217,8 +217,8 @@ class YanagiCommand:
         return ChainMap({}, GLBOAL_SUBCOMMANDS)
 
     @classmethod
-    def _options_bind_factory(cls, options_bind: MutableMapping[str, OptionPattern]):
-        return ChainMap(options_bind, GLOBAL_OPTIONS_BIND)
+    def _options_bind_factory(cls, options: list[OptionPattern]):
+        return ChainMap({i.keyword: i for i in options}, GLOBAL_OPTIONS_BIND)
 
     @classmethod
     def get_command_pattern(cls):
