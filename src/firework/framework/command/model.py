@@ -414,7 +414,7 @@ class YanagiCommandBase:
         if reason != LoopflowExitReason.satisfied:
             raise ValueError(f"Command analysis failed: {reason}")
 
-        command_models: list[YanagiCommandBase] = []
+        command_models: dict[type[YanagiCommandBase], YanagiCommandBase] = {}
         current_command_model_cls = cls
 
         for command_node in snapshot.command:
@@ -431,9 +431,9 @@ class YanagiCommandBase:
 
             model = current_command_model_cls(**assignes)
             model.__sistana_snapshot__ = snapshot
-            command_models.append(model)
+            command_models[current_command_model_cls] = model
 
-        return tuple(command_models)
+        return command_models
 
     @classmethod
     def register_to(cls, command: type[YanagiCommandBase]):
