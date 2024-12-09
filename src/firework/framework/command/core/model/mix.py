@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
-from firework.util import Some
+from firework.util import Maybe, Some
 
 from ..err import CaptureRejected, ReceivePanic, TransformPanic, ValidateRejected
 from .fragment import Fragment, assert_fragments_order
@@ -58,7 +58,7 @@ class Track:
         buffer: Buffer,
         upper_separators: str,
     ):
-        tail = None
+        tail = cast(Maybe[Any], None)
         token = None
 
         def rxfetch():
@@ -139,6 +139,18 @@ class Track:
 
         header = self.header
 
+        def rxfetch():
+            if header.validator is not None and not header.validator(segment):
+                raise ValidateRejected
+
+            if header.transformer is not None:
+                try:
+                    return header.transformer(segment)
+                except Exception as e:
+                    raise TransformPanic from e
+
+            return segment
+
         def rxprev():
             if header.name in mix.assignes:
                 return Some(mix.assignes[header.name])
@@ -147,7 +159,7 @@ class Track:
             mix.assignes[header.name] = val
 
         try:
-            header.receiver.receive(lambda: segment, rxprev, rxput)
+            header.receiver.receive(rxfetch, rxprev, rxput)
         except (CaptureRejected, ValidateRejected, TransformPanic):
             raise
         except Exception as e:
