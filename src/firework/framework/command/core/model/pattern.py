@@ -169,7 +169,6 @@ class SubcommandPattern:
             forwarding=forwarding,
         )
 
-        # FIXME: get_option
         self._options.append(pattern)
         self._add_option_track(keyword, fragments, header=header_fragment)
 
