@@ -190,7 +190,7 @@ class YanagiCommandBase:
         return f"_{cls.__name__}__{name}"
 
     @classmethod
-    def _subcommand_bind_factory(cls):
+    def _subcommands_bind_factory(cls):
         return ChainMap({}, GLBOAL_SUBCOMMANDS)
 
     @classmethod
@@ -366,7 +366,7 @@ class YanagiCommandBase:
         # Build Sistana Command Pattern
         command_meta = cls.__yanagi_subcommand_metadata__
 
-        cls.__sistana_subcommands_bind__ = cls._subcommand_bind_factory()
+        cls.__sistana_subcommands_bind__ = cls._subcommands_bind_factory()
         cls.__sistana_pattern__ = command_pattern = SubcommandPattern.build(
             command_meta.keyword,
             *command_fragments_sistana,
