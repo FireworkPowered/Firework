@@ -44,3 +44,14 @@ class ConstRx(Generic[T], Rx[T]):
 
     def receive(self, fetch: RxFetch, prev: RxPrev[T], put: RxPut[T]) -> None:  # noqa: ARG002
         put(self.value)
+
+
+class AddRx(Rx[int]):
+    def receive(self, fetch: RxFetch, prev: RxPrev[int], put: RxPut[int]) -> None:
+        v = prev()
+        num = fetch()
+
+        if v is None:
+            put(num + 1)
+        else:
+            put(v.value + num)
