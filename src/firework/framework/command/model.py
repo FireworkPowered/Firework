@@ -116,6 +116,10 @@ def fragment(
     separators: str | None = None,
     hybrid_separators: bool = True,
     is_header: bool = False,
+    capture: Capture | None = None,
+    receiver: Rx[Any] | None = None,
+    validator: Callable[[Any], bool] | None = None,
+    transformer: Callable[[Any], Any] | None = None,
 ):
     return field(
         default=default,
@@ -127,6 +131,10 @@ def fragment(
                 hybrid_separators=hybrid_separators,
                 owned_option=YANAGI_CURRENT_OPTION.get(),
                 is_header=is_header,
+                capture=capture,
+                receiver=receiver,
+                validator=validator,
+                transformer=transformer,
             )
         },
     )  # type: ignore
@@ -139,6 +147,10 @@ def header_fragment(
     variadic: bool = False,
     separators: str | None = None,
     hybrid_separators: bool = True,
+    capture: Capture | None = None,
+    receiver: Rx[Any] | None = None,
+    validator: Callable[[Any], bool] | None = None,
+    transformer: Callable[[Any], Any] | None = None,
 ):
     return fragment(
         default=default,
@@ -147,6 +159,10 @@ def header_fragment(
         separators=separators,
         hybrid_separators=hybrid_separators,
         is_header=True,
+        capture=capture,
+        receiver=receiver,
+        validator=validator,
+        transformer=transformer,
     )
 
 
