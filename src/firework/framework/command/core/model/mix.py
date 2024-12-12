@@ -48,6 +48,10 @@ class Track:
                 elif frag.default_factory is not None:
                     mix.assignes[frag.name] = frag.default_factory()
 
+            # NOTE: keep consistent with the `forward` method behavior
+            if not frag.variadic:
+                self.cursor += 1
+
         last = self.fragments[-1]
         if last.variadic and last.name not in mix.assignes:
             mix.assignes[last.name] = []
