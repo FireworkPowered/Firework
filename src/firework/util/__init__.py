@@ -11,3 +11,4 @@ from ._resolve import RequirementResolveFailed as RequirementResolveFailed
 from ._resolve import resolve_requirements as resolve_requirements
 from ._resolve import validate_removal as validate_removal
 from ._task_group import TaskGroup as TaskGroup
+from ._trie import RadixTrie as RadixTrie

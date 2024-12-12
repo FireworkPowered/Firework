@@ -5,7 +5,8 @@ from functools import cached_property
 from typing import TYPE_CHECKING, Iterable, MutableMapping
 
 from elaina_segment import SEPARATORS
-from tarina.trie import CharTrie, Trie
+
+from firework.util import RadixTrie
 
 from .fragment import assert_fragments_order
 from .mix import Preset, Track
@@ -24,19 +25,15 @@ class SubcommandPattern:
     separators: str = SEPARATORS
 
     aliases: list[str] = field(default_factory=list)
-    prefixes: Trie[str] | None = field(default=None)
+    prefixes: RadixTrie[str] | None = field(default=None)
     compact_header: bool = False
     enter_instantly: bool = False
     compact_aliases: bool = False
     header_fragment: Fragment | None = None
 
+    _subcommands: MutableMapping[str, SubcommandPattern] = field(default_factory=dict)
     _options: list[OptionPattern] = field(default_factory=list)
-    _exit_options: list[str] = field(default_factory=list)
-
-    _subcommands_bind: MutableMapping[str, SubcommandPattern] = field(default_factory=dict)
-    # _options_bind: MutableMapping[str, OptionPattern] = field(default_factory=dict)
-
-    _compact_keywords: Trie[str] | None = field(default=None)
+    _compact_keywords: RadixTrie[str] | None = field(default=None)
 
     @classmethod
     def build(
@@ -50,7 +47,6 @@ class SubcommandPattern:
         soft_keyword: bool = False,
         header_fragment: Fragment | None = None,
         subcommands_bind: MutableMapping[str, SubcommandPattern] | None = None,
-        # options_bind: MutableMapping[str, OptionPattern] | None = None,
     ):
         if subcommands_bind is None:
             subcommands_bind = {}
@@ -64,11 +60,14 @@ class SubcommandPattern:
             separators=separators,
             soft_keyword=soft_keyword,
             header_fragment=header_fragment,
-            _subcommands_bind=subcommands_bind,
+            _subcommands=subcommands_bind,
         )
 
         if prefixes:
-            subcommand.prefixes = CharTrie.fromkeys(list(prefixes))  # type: ignore
+            trie = subcommand.prefixes = RadixTrie()  # type: ignore
+
+            for prefix in prefixes:
+                trie.set(prefix, prefix)
 
         return subcommand
 
@@ -122,19 +121,21 @@ class SubcommandPattern:
         return self.subcommand_from_pattern(pattern)
 
     def subcommand_from_pattern(self, pattern: SubcommandPattern):
-        self._subcommands_bind[pattern.header] = pattern
+        self._subcommands[pattern.header] = pattern
         for alias in pattern.aliases:
-            self._subcommands_bind[alias] = pattern
+            self._subcommands[alias] = pattern
 
         if pattern.compact_header:
-            self._compact_keywords = CharTrie.fromkeys(
-                [
-                    pattern.header,
-                    *pattern.aliases,
-                    *(self._compact_keywords or []),
-                    *(pattern.aliases if pattern.compact_header else []),
-                ]
-            )  # type: ignore
+            trie = RadixTrie()
+            trie.set(pattern.header, pattern.header)
+
+            for alias in pattern.aliases:
+                trie.set(alias, alias)
+
+            if self._compact_keywords is not None:
+                trie.update(self._compact_keywords.items())
+
+            self._compact_keywords = trie
 
         return pattern
 
@@ -172,9 +173,6 @@ class SubcommandPattern:
         self._options.append(pattern)
         self._add_option_track(keyword, fragments, header=header_fragment)
 
-        if not forwarding:
-            self._exit_options.append(keyword)
-
         if header_separators and not fragments:
             raise ValueError("header_separators must be used with fragments")
 
@@ -197,6 +195,20 @@ class OptionPattern:
     @cached_property
     def _trigger(self):
         if self.compact_header:
-            return CharTrie.fromkeys([self.keyword, *self.aliases])
+            trie = RadixTrie[str]()
+            trie.set(self.keyword, self.keyword)
+
+            for alias in self.aliases:
+                trie.set(alias, alias)
+
+            return trie
 
         return {self.keyword, *self.aliases}
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self is other
+        return NotImplemented
+
+    def __hash__(self):
+        return id(self)

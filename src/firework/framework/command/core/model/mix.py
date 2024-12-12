@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, cast
 
 from firework.util import Maybe, Some
@@ -114,6 +115,18 @@ class Track:
         if token is not None:
             token.apply()
 
+    @contextmanager
+    def around(self, mix: Mix, fragment: Fragment):
+        if fragment.group is not None:
+            if fragment.group.ident in mix.rejected_group:
+                raise CaptureRejected(f"Group {fragment.group.ident} is rejected")
+
+            yield
+
+            mix.rejected_group.update(fragment.group.rejects)
+        else:
+            yield
+
     def forward(
         self,
         mix: Mix,
@@ -124,7 +137,9 @@ class Track:
             return
 
         first = self.fragments[self.cursor]
-        self.fetch(mix, first, buffer, separators)
+
+        with self.around(mix, first):
+            self.fetch(mix, first, buffer, separators)
 
         if not first.variadic:
             self.cursor += 1
@@ -158,12 +173,13 @@ class Track:
         def rxput(val):
             mix.assignes[header.name] = val
 
-        try:
-            header.receiver.receive(rxfetch, rxprev, rxput)
-        except (CaptureRejected, ValidateRejected, TransformPanic):
-            raise
-        except Exception as e:
-            raise ReceivePanic from e
+        with self.around(mix, header):
+            try:
+                header.receiver.receive(rxfetch, rxprev, rxput)
+            except (CaptureRejected, ValidateRejected, TransformPanic):
+                raise
+            except Exception as e:
+                raise ReceivePanic from e
 
     @property
     def assignable(self):

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Generic, TypeAlias, TypeVar
 
 from elaina_segment.err import OutOfData
 
-from .err import ParsePanic, Rejected
+from .err import ParsePanic, ParseRejected
 from .model.snapshot import AnalyzeSnapshot, ProcessingState
 
 if TYPE_CHECKING:
@@ -13,9 +14,11 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
+LoopflowResult: TypeAlias = "Accepted[T] | Rejected[T]"
 
-class LoopflowExitReason(str, Enum):
-    satisfied = "satisfied"
+
+class LoopflowRejectReason(str, Enum):
+    component_rejected = "component_rejected"
     unsatisfied = "unsatisfied"
     prefix_expect_str = "prefix_expect_str"
     prefix_mismatch = "prefix_mismatch"
@@ -35,7 +38,28 @@ class LoopflowExitReason(str, Enum):
         return f"<analyze(snapshot, buffer) => {self.value}>"
 
 
-def analyze_loopflow(snapshot: AnalyzeSnapshot, buffer: Buffer[T]) -> LoopflowExitReason:
+@dataclass
+class Accepted(Generic[T]):
+    snapshot: AnalyzeSnapshot
+    buffer: Buffer[T]
+
+    @property
+    def mix(self):
+        return self.snapshot.mix
+
+    # TODO: more adorable methods
+
+
+@dataclass
+class Rejected(Generic[T]):
+    reason: LoopflowRejectReason
+    exception: BaseException | None
+
+    snapshot: AnalyzeSnapshot
+    buffer: Buffer[T]
+
+
+def analyze_loopflow(snapshot: AnalyzeSnapshot, buffer: Buffer[T]) -> LoopflowResult[T]:
     mix = snapshot.mix
 
     while True:
@@ -48,24 +72,40 @@ def analyze_loopflow(snapshot: AnalyzeSnapshot, buffer: Buffer[T]) -> LoopflowEx
             if mix.satisfied:
                 mix.complete()
                 snapshot.determine()
-                return LoopflowExitReason.satisfied
+                return Accepted(snapshot, buffer)
 
-            # 这里如果没有 satisfied，如果是 option 的 track，则需要 reset
-            # 从 Buffer 吃掉的东西？我才不还。
+            # NOTE: If the option track is not satisfied, it will be reset.
+            #       Consumed data will not return back to the buffer.
             if state is ProcessingState.OPTION:
-                mix.option_tracks[snapshot.option].reset()  # type: ignore
+                owner, keyword, _ = snapshot.option  # type: ignore
+                mix.option_tracks[owner, keyword].reset()  # type: ignore
 
-            return LoopflowExitReason.unsatisfied
+            return Rejected(
+                reason=LoopflowRejectReason.unsatisfied,
+                exception=None,
+                snapshot=snapshot,
+                buffer=buffer,
+            )
 
         if state is ProcessingState.PREFIX:
             if context.prefixes is not None:
                 if not isinstance(token.val, str):
-                    return LoopflowExitReason.prefix_expect_str
+                    return Rejected(
+                        reason=LoopflowRejectReason.prefix_expect_str,
+                        exception=None,
+                        snapshot=snapshot,
+                        buffer=buffer,
+                    )
 
                 if context.prefixes is not None:
-                    prefix = context.prefixes.longest_prefix(buffer.first()).key  # type: ignore
+                    prefix = context.prefixes.longest_prefix_key(buffer.first())  # type: ignore
                     if prefix is None:
-                        return LoopflowExitReason.prefix_mismatch
+                        return Rejected(
+                            reason=LoopflowRejectReason.prefix_mismatch,
+                            exception=None,
+                            snapshot=snapshot,
+                            buffer=buffer,
+                        )
 
                     token.apply()
                     buffer.pushleft(token.val[len(prefix) :])
@@ -74,19 +114,34 @@ def analyze_loopflow(snapshot: AnalyzeSnapshot, buffer: Buffer[T]) -> LoopflowEx
             continue
         if state is ProcessingState.HEADER:
             if not isinstance(token.val, str):
-                return LoopflowExitReason.header_expect_str
+                return Rejected(
+                    reason=LoopflowRejectReason.header_expect_str,
+                    exception=None,
+                    snapshot=snapshot,
+                    buffer=buffer,
+                )
 
             token.apply()
 
             if token.val == context.header:
-                pass  # do nothing
+                # NOTE: Segment is exact header and no required additional processing.
+                pass
             elif context.compact_header and token.val.startswith(context.header):
+                # NOTE: Segment could be a compact header.
+                #       Tail of the segment should be pushed back to the buffer.
                 v = token.val[len(context.header) :]
                 if v:
                     buffer.pushleft(v)
 
             else:
-                return LoopflowExitReason.header_mismatch
+                # NOTE: Segment is not header.
+
+                return Rejected(
+                    reason=LoopflowRejectReason.header_mismatch,
+                    exception=None,
+                    snapshot=snapshot,
+                    buffer=buffer,
+                )
 
             track = mix.command_tracks[tuple(snapshot.command)]
             track.emit_header(mix, token.val)
@@ -95,19 +150,28 @@ def analyze_loopflow(snapshot: AnalyzeSnapshot, buffer: Buffer[T]) -> LoopflowEx
             continue
 
         if isinstance(token.val, str):
-            if (subcommand_info := snapshot.get_subcommand(context, token.val)) is not None:
+            if (subcommand_info := snapshot.get_subcommand(token.val)) is not None:
                 subcommand, tail = subcommand_info
-                enter_forward = False
+                enter_forward = False  # let's took more semantical.
 
                 if state is ProcessingState.OPTION:
-                    owner, keyword = snapshot.option  # type: ignore
+                    # NOTE: Option -> Subcommand, should check if the current option is satisfied.
+
+                    # NOTE: "_" is current option, reversed for the future.
+                    owner, keyword, _ = snapshot.option  # type: ignore
                     current_track = mix.option_tracks[owner, keyword]
 
                     if current_track.satisfied:
                         current_track.complete(mix)
                     elif not subcommand.soft_keyword:
                         current_track.reset()
-                        return LoopflowExitReason.previous_option_unsatisfied
+
+                        return Rejected(
+                            reason=LoopflowRejectReason.previous_option_unsatisfied,
+                            exception=None,
+                            snapshot=snapshot,
+                            buffer=buffer,
+                        )
                     else:
                         enter_forward = True
 
@@ -121,15 +185,24 @@ def analyze_loopflow(snapshot: AnalyzeSnapshot, buffer: Buffer[T]) -> LoopflowEx
 
                         snapshot.enter_subcommand(token.val, subcommand)
                         continue
+
                     if not subcommand.soft_keyword:
-                        return LoopflowExitReason.previous_subcommand_unsatisfied
+                        return Rejected(
+                            reason=LoopflowRejectReason.previous_subcommand_unsatisfied,
+                            exception=None,
+                            snapshot=snapshot,
+                            buffer=buffer,
+                        )
 
             elif (option_info := snapshot.get_option(token.val)) is not None:
                 target_option, target_owner, tail = option_info
                 enter_forward = False
 
                 if state is ProcessingState.OPTION:
-                    owner, keyword = snapshot.option  # type: ignore
+                    # NOTE: Option -> Option, should check if the current option is satisfied.
+
+                    # NOTE: "_" is current option, reversed for the future.
+                    owner, keyword, _ = snapshot.option  # type: ignore
                     current_track = mix.option_tracks[owner, keyword]
 
                     if current_track.satisfied:
@@ -137,13 +210,26 @@ def analyze_loopflow(snapshot: AnalyzeSnapshot, buffer: Buffer[T]) -> LoopflowEx
                         snapshot.state = ProcessingState.COMMAND
                     elif not target_option.soft_keyword:
                         current_track.reset()
-                        return LoopflowExitReason.previous_option_unsatisfied
+
+                        return Rejected(
+                            reason=LoopflowRejectReason.previous_option_unsatisfied,
+                            exception=None,
+                            snapshot=snapshot,
+                            buffer=buffer,
+                        )
                     else:
                         enter_forward = True
 
                 if not enter_forward and (not target_option.soft_keyword or snapshot.stage_satisfied):
+                    # NOTE: "soft_keyword and not stage_satisfied" means the "option" token should be treated as Fragment value.
+
                     if not snapshot.enter_option(token.val, target_owner, target_option.keyword, target_option):
-                        return LoopflowExitReason.option_duplicated_prohibited
+                        return Rejected(
+                            reason=LoopflowRejectReason.option_duplicated_prohibited,
+                            exception=None,
+                            snapshot=snapshot,
+                            buffer=buffer,
+                        )
 
                     token.apply()
 
@@ -154,32 +240,73 @@ def analyze_loopflow(snapshot: AnalyzeSnapshot, buffer: Buffer[T]) -> LoopflowEx
 
         if state is ProcessingState.COMMAND:
             track = mix.command_tracks[tuple(snapshot.command)]
+            separators = context.separators
 
             try:
-                response = track.forward(mix, buffer, context.separators)
+                hit_fragment = track.forward(mix, buffer, separators)
             except OutOfData:
-                return LoopflowExitReason.expect_forward_subcommand
-            except (Rejected, ParsePanic):
+                return Rejected(
+                    reason=LoopflowRejectReason.expect_forward_subcommand,
+                    exception=None,
+                    snapshot=snapshot,
+                    buffer=buffer,
+                )
+            except ParsePanic:
                 raise
+            except ParseRejected as e:
+                return Rejected(
+                    reason=LoopflowRejectReason.component_rejected,
+                    exception=e,
+                    snapshot=snapshot,
+                    buffer=buffer,
+                )
             except Exception as e:
-                raise ParsePanic from e
+                raise ParsePanic("Unexpected error occurred during sistana parsing") from e
             else:
-                if response is None:
-                    # track 上没有 fragments 可供分配了, 此时又没有再流转到其他 traverse
-                    return LoopflowExitReason.unexpected_segment
+                if hit_fragment is None:
+                    # NOTE: No fragments to assign on the track, and no further traverse to flow.
+                    #       This means user input is unexpected (too long often).
+
+                    return Rejected(
+                        reason=LoopflowRejectReason.unexpected_segment,
+                        exception=None,
+                        snapshot=snapshot,
+                        buffer=buffer,
+                    )
         else:
-            track = mix.option_tracks[snapshot.option]  # type: ignore
-            opt = snapshot._ref_cache_option[snapshot.option]  # type: ignore
+            owner, keyword, opt = snapshot.option  # type: ignore
+            track = mix.option_tracks[owner, keyword]  # type: ignore
+            separators = opt.separators
 
             try:
-                response = track.forward(mix, buffer, opt.separators)
+                hit_fragment = track.forward(mix, buffer, separators)
             except OutOfData:
+                # NOTE: For option fragments, "prompt" is unavailable so consumed data won't back.
+                #       (Sistana cannot treat soft keyword consistently.)
                 track.reset()
-                return LoopflowExitReason.expect_forward_option
-            except (Rejected, ParsePanic):
+
+                return Rejected(
+                    reason=LoopflowRejectReason.expect_forward_option,
+                    exception=None,
+                    snapshot=snapshot,
+                    buffer=buffer,
+                )
+            except ParsePanic:
                 raise
+            except ParseRejected as e:
+                return Rejected(
+                    reason=LoopflowRejectReason.component_rejected,
+                    exception=e,
+                    snapshot=snapshot,
+                    buffer=buffer,
+                )
             except Exception as e:
-                raise ParsePanic from e
+                raise ParsePanic("Unexpected error occurred during sistana parsing") from e
             else:
-                if response is None:
+                if hit_fragment is None:
                     snapshot.state = ProcessingState.COMMAND
+
+                    # NOTE: No fragments to assign on the track, and no further traverse to flow.
+                    #       Here folds the buffer next operation (usually a segment_once), which is a slow path.
+                    buffer.add_to_ahead(token.val)
+                    token.apply()

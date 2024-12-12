@@ -12,7 +12,6 @@ dependencies = [
     "importlib-metadata>=8.5.0",
     "loguru>=0.7.2",
     "elaina-segment>=0.4.0",
-    "tarina>=0.6.3",
     "lark[regex]>=1.2.2",
     "tomlkit>=0.13.2",
     "jsonschema>=4.23.0",
@@ -46,18 +45,8 @@ dev = [
     "pytest>=8.3.3",
     "typer>=0.13.0",
     "git-filter-repo>=2.45.0",
+    "pytest-cov>=6.0.0",
 ]
-
-[tool.pdm]
-distribution = true
-
-[tool.pdm.build]
-includes = ["src/firework/**/*.py", "src/firework/**/*.json"]
-
-[tool.pdm.scripts]
-regenerate-cli-schema = {call = "firework_devel.regenerate_cli_schema:main"}
-lab = {call = "firework_devel.lab:via_typer"}
-cloc = {shell = "tokei src"}
 
 [tool.ruff]
 line-length = 135
@@ -130,6 +119,7 @@ ignore = [
     "PLW2901",  # shallow 怎么你了
     "S101", # assert 怎么你了，非要 RuntimeError 吗
     "PLR2004",  # magic number 怎么你了
+    "TRY004",  # 我要抛啥错误我清楚
     "COM812", # 强制尾随逗号
     "TID252", # 相对导入
     "ISC001", # format warning
@@ -146,6 +136,18 @@ builtins-ignorelist = ["id"]
 "zlab/*.py" = [
     "T201"  # print 怎么你了
 ]
+
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.build]
+includes = ["src/firework/**/*.py", "src/firework/**/*.json"]
+
+[tool.pdm.scripts]
+regenerate-cli-schema = {call = "firework_devel.regenerate_cli_schema:main"}
+lab = {call = "firework_devel.lab:via_typer"}
+cloc = {shell = "tokei src"}
 
 [build-system]
 requires = ["pdm-backend"]
