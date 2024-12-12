@@ -132,9 +132,14 @@ mypy-init-return = true
 [tool.ruff.lint.flake8-builtins]
 builtins-ignorelist = ["id"]
 
-[tool.ruff.extend-per-file-ignores]
+[tool.ruff.lint.extend-per-file-ignores]
 "zlab/*.py" = [
     "T201"  # print 怎么你了
+]
+"tests/sistana/*.py" = [
+    "FBT001",
+    "FBT002",
+    "FBT003"  # Let it works
 ]
 
 
