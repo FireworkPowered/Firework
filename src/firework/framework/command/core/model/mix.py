@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, cast
 from firework.util import Maybe, Some
 
 from ..err import CaptureRejected, ReceivePanic, TransformPanic, ValidateRejected
-from .fragment import Fragment, assert_fragments_order
+from .fragment import Fragment, FragmentGroup, assert_fragments_order
 
 if TYPE_CHECKING:
     from elaina_segment import Buffer
@@ -121,6 +121,8 @@ class Track:
 
     @contextmanager
     def around(self, mix: Mix, fragment: Fragment):
+        # NOTE: around method ensures the rejected group is updated correctly
+
         if fragment.group is not None:
             if fragment.group.ident in mix.rejected_group:
                 raise CaptureRejected(f"Group {fragment.group.ident} is rejected")
@@ -216,17 +218,20 @@ class Preset:
 
 
 class Mix:
-    __slots__ = ("assignes", "command_tracks", "option_tracks")
+    __slots__ = ("assignes", "command_tracks", "option_tracks", "rejected_group")
 
     assignes: dict[str, Any]
 
     command_tracks: dict[tuple[str, ...], Track]
     option_tracks: dict[tuple[tuple[str, ...], str], Track]
 
+    rejected_group: set[FragmentGroup]
+
     def __init__(self):
         self.assignes = {}
         self.command_tracks = {}
         self.option_tracks = {}
+        self.rejected_group = set()
 
     def complete(self):
         for track in self.command_tracks.values():

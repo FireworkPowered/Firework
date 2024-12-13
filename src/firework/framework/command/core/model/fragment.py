@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable
 
 from firework.util import Maybe, safe_dcls_kw
@@ -13,6 +13,7 @@ from .receiver import Rx
 class Fragment:
     name: str
     variadic: bool = False
+    group: FragmentGroup | None = None
     default: Maybe[Any] = None
     default_factory: Callable[[], Any] | None = None
 
@@ -23,6 +24,20 @@ class Fragment:
     receiver: Rx[Any] = Rx()
     validator: Callable[[Any], bool] | None = None
     transformer: Callable[[Any], Any] | None = None
+
+
+@dataclass
+class FragmentGroup:
+    ident: str
+    rejects: list[FragmentGroup] = field(default_factory=list)
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self is other
+        return NotImplemented
+
+    def __hash__(self):
+        return id(self)
 
 
 def assert_fragments_order(fragments: Iterable[Fragment]):

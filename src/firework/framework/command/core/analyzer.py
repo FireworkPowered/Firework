@@ -35,7 +35,7 @@ class LoopflowRejectReason(str, Enum):
         return self.value
 
     def __repr__(self):
-        return f"<analyze(snapshot, buffer) => {self.value}>"
+        return f"<loopflow rejected, reason = {self.value}>"
 
 
 @dataclass
