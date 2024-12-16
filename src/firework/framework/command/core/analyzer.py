@@ -123,7 +123,7 @@ def analyze_loopflow(snapshot: AnalyzeSnapshot, buffer: Buffer[T]) -> LoopflowRe
 
             token.apply()
 
-            if token.val == context.header:
+            if token.val == context.header or token.val in context.aliases:
                 # NOTE: Segment is exact header and no required additional processing.
                 pass
             elif context.compact_header and token.val.startswith(context.header):

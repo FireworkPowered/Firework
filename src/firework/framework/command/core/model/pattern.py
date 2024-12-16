@@ -40,6 +40,7 @@ class SubcommandPattern:
         cls,
         header: str,
         *fragments: Fragment,
+        aliases: Iterable[str] = (),
         prefixes: Iterable[str] = (),
         compact_header: bool = False,
         enter_instantly: bool = True,
@@ -55,6 +56,7 @@ class SubcommandPattern:
         subcommand = cls(
             header=header,
             preset=preset,
+            aliases=list(aliases),
             compact_header=compact_header,
             enter_instantly=enter_instantly,
             separators=separators,
@@ -177,6 +179,9 @@ class SubcommandPattern:
             raise ValueError("header_separators must be used with fragments")
 
         return self
+
+    def register_to(self, parent: SubcommandPattern):
+        parent.subcommand_from_pattern(self)
 
 
 @dataclass
