@@ -1,246 +1,31 @@
 from __future__ import annotations
 
 from collections import ChainMap
-from contextlib import contextmanager
-from contextvars import ContextVar
-from dataclasses import MISSING, Field, dataclass, field, is_dataclass
+from dataclasses import MISSING, Field, dataclass, is_dataclass
 from dataclasses import fields as dc_fields
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterable, TypeAlias, TypeVar, cast, dataclass_transform
+from typing import TYPE_CHECKING, ClassVar, Iterable, TypeVar, cast, dataclass_transform
 
 from elaina_segment import SEPARATORS, Buffer
 
-from firework.util import Some, cvar
+from firework.util import Some
 
 from .core.analyzer import Rejected, analyze_loopflow
 from .core.model.fragment import Fragment, FragmentGroup
 from .core.model.pattern import OptionPattern, SubcommandPattern
 from .core.model.snapshot import AnalyzeSnapshot, ProcessingState
+from .globals import (
+    GLBOAL_SUBCOMMANDS,
+    GLOBAL_OPTIONS_BIND,
+    YANAGI_INHERITED_OPTIONS,
+    YANAGI_INHERITED_SUBCOMMANDS,
+)
+from .metadata import FragmentMetadata, OptionMetadata, SubcommandMetadata, UnionMetadata
+from .specifiers import fragment, fragment_union, header_fragment
 
 if TYPE_CHECKING:
-    from .core.model.capture import Capture
-    from .core.model.receiver import Rx
+    from .globals import FieldTwin
 
 T = TypeVar("T")
-Cmd = TypeVar("Cmd", bound="YanagiCommandBase")
-
-FieldTwin: TypeAlias = "tuple[Field[Any], FragmentMetadata]"
-
-FRAGMENT_METADATA_IDENT = "yanagi_fragment"
-UNION_METADATA_IDENT = "yanagi_union"
-
-FieldTwin: TypeAlias = "tuple[Field[Any], FragmentMetadata]"
-
-GLBOAL_SUBCOMMANDS: ChainMap[str, SubcommandPattern] = ChainMap()
-GLOBAL_OPTIONS_BIND: ChainMap[str, OptionPattern] = ChainMap()
-
-YANAGI_CURRENT_OPTION: ContextVar[OptionMetadata | None] = ContextVar("YANAGI_CURRENT_OPTION", default=None)
-YANAGI_CURRENT_FRAGMENT_GROUP: ContextVar[FragmentGroup | None] = ContextVar("YANAGI_CURRENT_FRAGMENT_GROUP", default=None)
-YANAGI_INHERITED_SUBCOMMANDS: ContextVar[ChainMap[str, SubcommandPattern] | None] = ContextVar(
-    "YANAGI_INHERITED_SUBCOMMANDS", default=None
-)
-YANAGI_INHERITED_OPTIONS: ContextVar[ChainMap[str, OptionPattern] | None] = ContextVar("YANAGI_INHERITED_OPTIONS", default=None)
-
-
-@dataclass
-class FragmentMetadata:
-    variadic: bool = False
-    separators: str | None = None
-    group: FragmentGroup | None = None
-    hybrid_separators: bool = True
-
-    owned_option: OptionMetadata | None = None
-    is_header: bool = False
-
-    capture: Capture | None = None
-    receiver: Rx[Any] | None = None
-    validator: Callable[[Any], bool] | None = None
-    transformer: Callable[[Any], Any] | None = None
-
-    @staticmethod
-    def get(dc_field: Field):
-        if FRAGMENT_METADATA_IDENT not in dc_field.metadata:
-            raise AttributeError("Fragment metadata is not found")
-
-        return dc_field.metadata[FRAGMENT_METADATA_IDENT]
-
-    @classmethod
-    def build_default(cls):
-        return cls()
-
-    @staticmethod
-    def get_or_default(dc_field: Field):
-        if FRAGMENT_METADATA_IDENT not in dc_field.metadata:
-            return FragmentMetadata.build_default()
-
-        return dc_field.metadata[FRAGMENT_METADATA_IDENT]
-
-
-@dataclass
-class UnionMetadata:
-    twins: list[FieldTwin]
-
-    @staticmethod
-    def get(dc_field: Field) -> UnionMetadata | None:
-        if UNION_METADATA_IDENT not in dc_field.metadata:
-            return
-
-        return dc_field.metadata[UNION_METADATA_IDENT]
-
-    @staticmethod
-    def get_strict(dc_field: Field) -> UnionMetadata:
-        if UNION_METADATA_IDENT not in dc_field.metadata:
-            raise AttributeError("Union metadata is not found")
-
-        return dc_field.metadata[UNION_METADATA_IDENT]
-
-
-@dataclass
-class SubcommandMetadata:
-    keyword: str
-    aliases: Iterable[str] = ()
-    prefixes: Iterable[str] = ()
-    separators: str = SEPARATORS
-
-    soft_keyword: bool = False
-    compact_header: bool = False
-    enter_instantly: bool = False
-
-
-@dataclass
-class OptionMetadata:
-    keyword: str
-    aliases: list[str] = field(default_factory=list)
-    separators: str = SEPARATORS
-    header_separators: str | None = None
-
-    soft_keyword: bool = False
-    compact_header: bool = False
-    allow_duplicate: bool = False
-    forwarding: bool = True
-    hybrid_separators: bool = False
-
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self is other
-        return NotImplemented
-
-    def __hash__(self):
-        return id(self)
-
-
-@contextmanager
-def option(
-    keyword: str,
-    aliases: list[str] | None = None,
-    separators: str = SEPARATORS,
-    header_separators: str | None = None,
-    *,
-    soft_keyword: bool = False,
-    compact_header: bool = False,
-    allow_duplicate: bool = False,
-    forwarding: bool = True,
-    hybrid_separators: bool = False,
-):
-    with cvar(
-        YANAGI_CURRENT_OPTION,
-        OptionMetadata(
-            keyword,
-            aliases or [],
-            separators,
-            header_separators,
-            soft_keyword,
-            compact_header,
-            allow_duplicate,
-            forwarding,
-            hybrid_separators,
-        ),
-    ):
-        yield
-
-
-def fragment(
-    *,
-    default: Any = MISSING,
-    default_factory: Callable[[], Any] = MISSING,  # type: ignore
-    variadic: bool = False,
-    separators: str | None = None,
-    hybrid_separators: bool = True,
-    is_header: bool = False,
-    capture: Capture | None = None,
-    receiver: Rx[Any] | None = None,
-    validator: Callable[[Any], bool] | None = None,
-    transformer: Callable[[Any], Any] | None = None,
-):
-    return field(
-        default=default,
-        default_factory=default_factory,
-        metadata={
-            FRAGMENT_METADATA_IDENT: FragmentMetadata(
-                variadic=variadic,
-                separators=separators,
-                hybrid_separators=hybrid_separators,
-                owned_option=YANAGI_CURRENT_OPTION.get(),
-                group=YANAGI_CURRENT_FRAGMENT_GROUP.get(),
-                is_header=is_header,
-                capture=capture,
-                receiver=receiver,
-                validator=validator,
-                transformer=transformer,
-            )
-        },
-    )  # type: ignore
-
-
-def header_fragment(
-    *,
-    default: Any = MISSING,
-    default_factory: Callable[[], Any] = MISSING,  # type: ignore
-    variadic: bool = False,
-    separators: str | None = None,
-    hybrid_separators: bool = True,
-    capture: Capture | None = None,
-    receiver: Rx[Any] | None = None,
-    validator: Callable[[Any], bool] | None = None,
-    transformer: Callable[[Any], Any] | None = None,
-):
-    return fragment(
-        default=default,
-        default_factory=default_factory,
-        variadic=variadic,
-        separators=separators,
-        hybrid_separators=hybrid_separators,
-        is_header=True,
-        capture=capture,
-        receiver=receiver,
-        validator=validator,
-        transformer=transformer,
-    )
-
-
-# def fragment_group(ident: str, rejects: Iterable[str] = ()):
-#     with cvar(YANAGI_CURRENT_FRAGMENT_GROUP, FragmentGroup(ident, list(rejects))):
-#         yield
-
-
-def fragment_union(*fragment_fields: Field):
-    twins = []
-
-    for dc_field in fragment_fields:
-        if UNION_METADATA_IDENT in dc_field.metadata:
-            twins.extend(UnionMetadata.get_strict(dc_field).twins)
-        else:
-            twins.append((dc_field, FragmentMetadata.get(dc_field)))
-
-    return field(metadata={UNION_METADATA_IDENT: UnionMetadata(twins=twins)})
-
-
-def subcommand_of(host: type[YanagiCommandBase]):
-    def wrapper(guest: type[Cmd]) -> type[Cmd]:
-        guest.register_to(host)
-
-        return guest
-
-    return wrapper
 
 
 class YanagiCommandBase:
@@ -488,6 +273,7 @@ class YanagiCommandBase:
             model.__sistana_snapshot__ = snapshot
             command_models[current_command_model_cls] = model
 
+        # TODO: YanagiParseResult class
         return command_models
 
     @classmethod

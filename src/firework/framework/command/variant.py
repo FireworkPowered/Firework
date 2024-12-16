@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable
 from elaina_segment import SEPARATORS
 
 from .core.model.receiver import AddRx, CountRx, Rx
-from .model import fragment, fragment_union, header_fragment, option
+from .specifiers import fragment, fragment_union, header_fragment, option
 
 if TYPE_CHECKING:
     from .core.model.capture import Capture
@@ -191,3 +191,19 @@ def single_slot_option(
             validator=validator,
             transformer=transformer,
         )
+
+
+# def conflicts(*dc_fields: Field):
+#     flatten_twins = UnionMetadata.get_strict(fragment_union(*dc_fields)).twins
+#     groups: list[FragmentGroup] = []
+
+#     for ix, (_, fragment_meta) in enumerate(flatten_twins):
+#         # Create a group for each field
+#         fragment_meta.group = FragmentGroup(ident=f"conflicts_group_{ix}")
+#         groups.append(fragment_meta.group)
+
+#     for ix, group in enumerate(groups):
+#         # NOTE: Required mangle group ident for each group
+#         group.rejects = groups[:ix] + groups[ix + 1 :]
+
+#     return fragment_union(*dc_fields)
