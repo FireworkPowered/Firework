@@ -5,20 +5,25 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import MISSING, Field, dataclass, field, is_dataclass
 from dataclasses import fields as dc_fields
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterable, TypeAlias, cast, dataclass_transform
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterable, TypeAlias, TypeVar, cast, dataclass_transform
 
 from elaina_segment import SEPARATORS, Buffer
 
 from firework.util import Some, cvar
 
-from .core.analyzer import LoopflowExitReason, analyze_loopflow
-from .core.model.fragment import Fragment
+from .core.analyzer import Rejected, analyze_loopflow
+from .core.model.fragment import Fragment, FragmentGroup
 from .core.model.pattern import OptionPattern, SubcommandPattern
 from .core.model.snapshot import AnalyzeSnapshot, ProcessingState
 
 if TYPE_CHECKING:
     from .core.model.capture import Capture
     from .core.model.receiver import Rx
+
+T = TypeVar("T")
+Cmd = TypeVar("Cmd", bound="YanagiCommandBase")
+
+FieldTwin: TypeAlias = "tuple[Field[Any], FragmentMetadata]"
 
 FRAGMENT_METADATA_IDENT = "yanagi_fragment"
 UNION_METADATA_IDENT = "yanagi_union"
@@ -29,6 +34,7 @@ GLBOAL_SUBCOMMANDS: ChainMap[str, SubcommandPattern] = ChainMap()
 GLOBAL_OPTIONS_BIND: ChainMap[str, OptionPattern] = ChainMap()
 
 YANAGI_CURRENT_OPTION: ContextVar[OptionMetadata | None] = ContextVar("YANAGI_CURRENT_OPTION", default=None)
+YANAGI_CURRENT_FRAGMENT_GROUP: ContextVar[FragmentGroup | None] = ContextVar("YANAGI_CURRENT_FRAGMENT_GROUP", default=None)
 YANAGI_INHERITED_SUBCOMMANDS: ContextVar[ChainMap[str, SubcommandPattern] | None] = ContextVar(
     "YANAGI_INHERITED_SUBCOMMANDS", default=None
 )
@@ -39,6 +45,7 @@ YANAGI_INHERITED_OPTIONS: ContextVar[ChainMap[str, OptionPattern] | None] = Cont
 class FragmentMetadata:
     variadic: bool = False
     separators: str | None = None
+    group: FragmentGroup | None = None
     hybrid_separators: bool = True
 
     owned_option: OptionMetadata | None = None
@@ -90,6 +97,7 @@ class UnionMetadata:
 @dataclass
 class SubcommandMetadata:
     keyword: str
+    aliases: Iterable[str] = ()
     prefixes: Iterable[str] = ()
     separators: str = SEPARATORS
 
@@ -172,6 +180,7 @@ def fragment(
                 separators=separators,
                 hybrid_separators=hybrid_separators,
                 owned_option=YANAGI_CURRENT_OPTION.get(),
+                group=YANAGI_CURRENT_FRAGMENT_GROUP.get(),
                 is_header=is_header,
                 capture=capture,
                 receiver=receiver,
@@ -208,6 +217,11 @@ def header_fragment(
     )
 
 
+# def fragment_group(ident: str, rejects: Iterable[str] = ()):
+#     with cvar(YANAGI_CURRENT_FRAGMENT_GROUP, FragmentGroup(ident, list(rejects))):
+#         yield
+
+
 def fragment_union(*fragment_fields: Field):
     twins = []
 
@@ -218,6 +232,15 @@ def fragment_union(*fragment_fields: Field):
             twins.append((dc_field, FragmentMetadata.get(dc_field)))
 
     return field(metadata={UNION_METADATA_IDENT: UnionMetadata(twins=twins)})
+
+
+def subcommand_of(host: type[YanagiCommandBase]):
+    def wrapper(guest: type[Cmd]) -> type[Cmd]:
+        guest.register_to(host)
+
+        return guest
+
+    return wrapper
 
 
 class YanagiCommandBase:
@@ -263,6 +286,7 @@ class YanagiCommandBase:
     def _sistana_fragment_factory(cls, dc_field: Field, metadata: FragmentMetadata):
         f = Fragment(
             name=cls._mangle_name(dc_field.name),
+            group=metadata.group,
             variadic=metadata.variadic,
             separators=metadata.separators,
             hybrid_separators=metadata.hybrid_separators,
@@ -305,6 +329,7 @@ class YanagiCommandBase:
         command_fragments: list[FieldTwin] = []
         option_headers: dict[OptionMetadata, FieldTwin] = {}
         option_fragments_map: dict[OptionMetadata, list[FieldTwin]] = {}
+        fragment_groups: list[FragmentGroup] = []
 
         def _unpack_field_metadata(dc_field: Field, fragment_meta: FragmentMetadata):
             nonlocal command_header_fragment, command_fragments, option_headers, option_fragments_map
@@ -342,9 +367,17 @@ class YanagiCommandBase:
                     field_ref.name = dc_field.name
 
                     _unpack_field_metadata(field_ref, fragment_meta)
+
+                    # Gather fragment groups
+                    if fragment_meta.group is not None:
+                        fragment_groups.append(fragment_meta.group)
             else:
                 fragment_meta = FragmentMetadata.get_or_default(dc_field)
                 _unpack_field_metadata(dc_field, fragment_meta)
+
+                # Gather fragment groups
+                if fragment_meta.group is not None:
+                    fragment_groups.append(fragment_meta.group)
 
         # Build Sistana fragments
 
@@ -378,6 +411,12 @@ class YanagiCommandBase:
             dc_field, fragment_meta = command_header_fragment
             command_header_fragment_sistana = cls._sistana_fragment_factory(dc_field, fragment_meta)
 
+        # Post-process fragment groups, mangle names.
+
+        for group in fragment_groups:
+            group.ident = cls._mangle_name(group.ident)
+            # group.rejects = [cls._mangle_name(i) for i in group.rejects]
+
         # Build Sistana Command Pattern
         command_meta = cls.__yanagi_subcommand_metadata__
 
@@ -385,6 +424,7 @@ class YanagiCommandBase:
         cls.__sistana_pattern__ = command_pattern = SubcommandPattern.build(
             command_meta.keyword,
             *command_fragments_sistana,
+            aliases=command_meta.aliases,
             prefixes=command_meta.prefixes,
             separators=command_meta.separators,
             soft_keyword=command_meta.soft_keyword,
@@ -424,10 +464,10 @@ class YanagiCommandBase:
     @classmethod
     def parse(cls, buffer: Buffer, state: ProcessingState = ProcessingState.PREFIX):
         snapshot = cls.create_snapshot(state)
-        reason = analyze_loopflow(snapshot, buffer)
+        response = analyze_loopflow(snapshot, buffer)
 
-        if reason != LoopflowExitReason.satisfied:
-            raise ValueError(f"Command analysis failed (reason = {reason})")
+        if isinstance(response, Rejected):
+            raise ValueError(f"Command analysis failed (reason = {response.reason})") from response.exception
 
         command_models: dict[type[YanagiCommandBase], YanagiCommandBase] = {}
         current_command_model_cls = cls
@@ -463,6 +503,7 @@ class YanagiCommand(YanagiCommandBase):
         cls,
         *,
         keyword: str,
+        aliases: Iterable[str] = (),
         prefixes: Iterable[str] = (),
         separators: str = SEPARATORS,
         soft_keyword: bool = False,
@@ -473,6 +514,7 @@ class YanagiCommand(YanagiCommandBase):
 
         cls.__yanagi_subcommand_metadata__ = SubcommandMetadata(
             keyword=keyword,
+            aliases=aliases,
             prefixes=prefixes,
             separators=separators,
             soft_keyword=soft_keyword,
