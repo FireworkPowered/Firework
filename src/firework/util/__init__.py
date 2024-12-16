@@ -6,9 +6,5 @@ from ._cvar import cvar as cvar
 from ._dcls import safe_dcls_kw as safe_dcls_kw
 from ._maybe import Maybe as Maybe
 from ._maybe import Some as Some
-from ._resolve import DependencyBrokenError as DependencyBrokenError
-from ._resolve import RequirementResolveFailed as RequirementResolveFailed
-from ._resolve import resolve_requirements as resolve_requirements
-from ._resolve import validate_removal as validate_removal
 from ._task_group import TaskGroup as TaskGroup
 from ._trie import RadixTrie as RadixTrie

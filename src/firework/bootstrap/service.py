@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Iterable
 
-from firework.util import RequirementResolveFailed as RequirementResolveFailed
-from firework.util import resolve_requirements as _resolve_requirements
-from firework.util import validate_removal
+from ._resolve import RequirementResolveFailed as RequirementResolveFailed
+from ._resolve import resolve_dependencies as resolve_dependencies
+from ._resolve import validate_services_removal
 
 if TYPE_CHECKING:
     from .context import ServiceContext
@@ -15,6 +15,14 @@ class Service:
 
     @property
     def dependencies(self) -> tuple[str, ...]:
+        return ()
+
+    @property
+    def before(self) -> tuple[str, ...]:
+        return ()
+
+    @property
+    def after(self) -> tuple[str, ...]:
         return ()
 
     async def launch(self, context: ServiceContext):
@@ -28,14 +36,13 @@ class Service:
             pass
 
 
-def resolve_services_dependency(services: Iterable[Service], exclude: Iterable[str] | None = None, *, reverse: bool = False):
-    return _resolve_requirements(
-        [(service.id, service.dependencies) for service in services],
+def resolve_services_dependency(services: Iterable[Service], exclude: Iterable[Service], *, reverse: bool = False):
+    return resolve_dependencies(
+        services,
+        exclude=set(exclude),
         reverse=reverse,
-        excluded=set(exclude) if exclude else None,
     )
 
 
 def validate_service_removal(existed: Iterable[Service], remove: Iterable[Service]):
-    graph = {service.id: set(service.dependencies) for service in existed}
-    validate_removal(graph, {service.id for service in remove})
+    validate_services_removal(existed, remove)

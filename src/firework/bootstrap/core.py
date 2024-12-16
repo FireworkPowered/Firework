@@ -10,8 +10,8 @@ from loguru import logger
 from firework.globals import BOOTSTRAP_CONTEXT
 from firework.util import TaskGroup, any_completed, cvar, unity
 
+from ._resolve import resolve_dependencies, validate_services_removal
 from .context import ServiceContext
-from .service import resolve_services_dependency, validate_service_removal
 from .status import Phase, Stage
 
 if TYPE_CHECKING:
@@ -132,7 +132,7 @@ class Bootstrap:
 
     async def _handle_stage_prepare(self, services: Iterable[Service]):
         bind = {service.id: service for service in services}
-        resolved = resolve_services_dependency(services, exclude=self.services.keys())
+        resolved = resolve_dependencies(services, exclude=self.services.values())
         previous_tasks: list[asyncio.Task] = []
 
         for layer in resolved:
@@ -179,8 +179,8 @@ class Bootstrap:
 
         daemon_bind = {service.id: self.daemon_tasks[service.id] for service in services}
 
-        validate_service_removal(self.services.values(), services)
-        resolved = resolve_services_dependency(services, reverse=True, exclude=self.services.keys())
+        validate_services_removal(self.services.values(), services)
+        resolved = resolve_dependencies(services, reverse=True, exclude=self.services.values())
 
         for layer in resolved:
             _contexts = {i: self.contexts[i] for i in layer}
