@@ -35,16 +35,16 @@ def resolve_dependencies(
     reverse: bool = False,
 ) -> list[set[str]]:
     resolved_id: set[str] = {service.id for service in exclude}
-    unresolved: set[Service] = set(services)
+    unresolved: dict[str, Service] = {service.id: service for service in services}
     result: list[set[str]] = []
 
     dependencies_map = _build_dependencies_map(services)
 
     while unresolved:
-        layer = {service.id for service in unresolved if resolved_id.issuperset(dependencies_map[service.id])}
+        layer = {service.id for service in unresolved.values() if resolved_id.issuperset(dependencies_map[service.id])}
 
         if layer:
-            unresolved -= layer
+            unresolved = {k: v for k, v in unresolved.items() if k not in layer}
 
             resolved_id.update(layer)
             result.append(layer)
