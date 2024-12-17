@@ -154,6 +154,9 @@ class UvicornASGIService(Service):
                 target.handlers = [_LoguruHandler(level=level)]
                 target.propagate = False
 
+            logger.info(f"Uvicorn service listen at http://{config.host}:{config.port}")
+            logger.info("\n".join(["Exposed endpoints:", *(f"  - {i}" for i in self.middleware.mounts)]))
+
         async with context.online():
             # create uvicorn serve task
             serve_task = asyncio.create_task(self.server.serve())
