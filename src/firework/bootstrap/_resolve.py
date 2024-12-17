@@ -44,7 +44,7 @@ def resolve_dependencies(
         layer = {service.id for service in unresolved if resolved_id.issuperset(dependencies_map[service.id])}
 
         if layer:
-            unresolved = {service for service in unresolved if service.id not in layer}
+            unresolved -= layer
 
             resolved_id.update(layer)
             result.append(layer)
