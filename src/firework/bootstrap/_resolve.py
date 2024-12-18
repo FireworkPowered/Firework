@@ -33,23 +33,49 @@ def resolve_dependencies(
     exclude: Iterable[Service],
     *,
     reverse: bool = False,
-) -> list[set[str]]:
-    resolved_id: set[str] = {service.id for service in exclude}
-    unresolved: dict[str, Service] = {service.id: service for service in services}
-    result: list[set[str]] = []
+) -> list[list[str]]:
+    services = list(services)
 
-    dependencies_map = _build_dependencies_map(services)
+    # 构建初始依赖图：dependencies + after
+    dependencies_map: dict[str, set[str]] = {}
+    for s in services:
+        deps = set(s.dependencies) | set(s.after)  # after相当于额外依赖
+        dependencies_map[s.id] = deps
+
+    # 处理 before 约束：A before B -> B depends on A
+    for s in services:
+        for b in s.before:
+            if b not in dependencies_map:
+                dependencies_map[b] = set()
+            dependencies_map[b].add(s.id)
+
+    unresolved = {s.id: s for s in services}
+    resolved_id = {i.id for i in exclude}
+    result: list[list[str]] = []
 
     while unresolved:
-        layer = {service.id for service in unresolved.values() if resolved_id.issuperset(dependencies_map[service.id])}
+        # 找出所有依赖已解决的候选服务
+        layer_candidates = [service for service in unresolved.values() if dependencies_map.get(service.id, set()) <= resolved_id]
 
-        if layer:
-            unresolved = {k: v for k, v in unresolved.items() if k not in layer}
+        if not layer_candidates:
+            raise TypeError("Failed to resolve requirements due to cyclic dependencies or unmet constraints.")
 
-            resolved_id.update(layer)
-            result.append(layer)
+        # 根据是否有 before 约束进行分类
+        layer_without_before = [s.id for s in layer_candidates if not s.before]
+        layer_with_before = [s.id for s in layer_candidates if s.before]
+
+        # 优先无 before 的服务，一旦无 before 的服务存在，就先放这一层
+        if layer_without_before:
+            current_layer = layer_without_before
         else:
-            raise RequirementResolveFailed("Failed to resolve requirements")
+            current_layer = layer_with_before
+
+        # 从未解决中移除当前层的服务
+        for cid in current_layer:
+            del unresolved[cid]
+
+        resolved_id.update(current_layer)
+        result.append(current_layer)
 
     if reverse:
         result.reverse()
