@@ -14,61 +14,50 @@ class DependencyBrokenError(Exception):
     pass
 
 
-def _build_dependencies_map(services: Iterable[Service]) -> dict[str, tuple[str, ...]]:
-    dependencies_map = {}
+def _build_dependencies_map(services: Iterable[Service]) -> dict[str, set[str]]:
+    dependencies_map: dict[str, set[str]] = {}
+
     for service in services:
-        dependencies_map[service.id] = service.dependencies
+        dependencies_map[service.id] = set(service.dependencies) | set(service.after)
 
         for before in service.before:
-            dependencies_map[before] = (*dependencies_map.get(before, ()), service.id)
-
-        for after in service.after:
-            dependencies_map[service.id] = (*dependencies_map.get(service.id, ()), after)
+            dependencies_map.setdefault(before, set()).add(service.id)
 
     return dependencies_map
 
 
 def resolve_dependencies(
     services: Iterable[Service],
-    exclude: Iterable[Service],
+    exclude: Iterable[Service] = (),
     *,
     reverse: bool = False,
 ) -> list[list[str]]:
     services = list(services)
 
-    # 构建初始依赖图：dependencies + after
-    dependencies_map: dict[str, set[str]] = {}
-    for s in services:
-        deps = set(s.dependencies) | set(s.after)  # after相当于额外依赖
-        dependencies_map[s.id] = deps
-
-    # 处理 before 约束：A before B -> B depends on A
-    for s in services:
-        for b in s.before:
-            if b not in dependencies_map:
-                dependencies_map[b] = set()
-            dependencies_map[b].add(s.id)
+    dependencies_map = _build_dependencies_map(services)
 
     unresolved = {s.id: s for s in services}
     resolved_id = {i.id for i in exclude}
     result: list[list[str]] = []
 
     while unresolved:
-        # 找出所有依赖已解决的候选服务
-        layer_candidates = [service for service in unresolved.values() if dependencies_map.get(service.id, set()) <= resolved_id]
+        layer_candidates = [service for service in unresolved.values() if resolved_id.issuperset(dependencies_map[service.id])]
 
         if not layer_candidates:
             raise TypeError("Failed to resolve requirements due to cyclic dependencies or unmet constraints.")
 
         # 根据是否有 before 约束进行分类
-        layer_without_before = [s.id for s in layer_candidates if not s.before]
-        layer_with_before = [s.id for s in layer_candidates if s.before]
+        befores = []
+        no_befores = []
+
+        for service in layer_candidates:
+            if service.before:
+                befores.append(service)
+            else:
+                no_befores.append(service)
 
         # 优先无 before 的服务，一旦无 before 的服务存在，就先放这一层
-        if layer_without_before:
-            current_layer = layer_without_before
-        else:
-            current_layer = layer_with_before
+        current_layer = no_befores or befores
 
         # 从未解决中移除当前层的服务
         for cid in current_layer:
