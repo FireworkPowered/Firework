@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 from firework.util import cvar
 
 if TYPE_CHECKING:
-    from .record import EntrypointRecord, EntrypointRecordLabel
+    from .record import EntrypointRecordLabel, FeatureRecord
     from .typing import TEntity
 
 
 class CollectContext:
-    fn_implements: dict[EntrypointRecordLabel, EntrypointRecord]
+    fn_implements: dict[EntrypointRecordLabel, FeatureRecord]
 
     def __init__(self):
         self.fn_implements = {}

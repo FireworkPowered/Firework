@@ -35,7 +35,7 @@ class ImplementSide(Generic[P, CQ]):
     def __init__(self, target):
         self.collector = target
 
-    def impl(self: ImplementSide[P1, C], entrypoint: Entrypoint, *args: P1.args, **kwargs: P1.kwargs):
+    def impl(self: ImplementSide[P1, C], entrypoint: Feature, *args: P1.args, **kwargs: P1.kwargs):
         def wrapper(callee: C) -> C:
             entity = _ensure_entity(callee)
             entity.add_target(entrypoint, self.collector(*args, **kwargs))
@@ -67,7 +67,7 @@ CallSideT = TypeVar("CallSideT", bound=CallSide)
 
 
 @dataclass(init=False, eq=True, unsafe_hash=True)
-class Entrypoint(Generic[ImplementSideT]):
+class Feature(Generic[ImplementSideT]):
     implement_side: ImplementSideT
 
     def __init__(self, implement_side: ImplementSideT):
@@ -75,24 +75,24 @@ class Entrypoint(Generic[ImplementSideT]):
 
     @overload
     @classmethod
-    def static(cls, func: Callable[P1, CollectEndpointTarget[Callable[P2, R]]]) -> Entrypoint[ImplementSide[P1, Callable[P2, R]]]: ...
+    def static(cls, func: Callable[P1, CollectEndpointTarget[Callable[P2, R]]]) -> Feature[ImplementSide[P1, Callable[P2, R]]]: ...
     @overload
     @classmethod
-    def static(cls, func: Callable[P1, CollectEndpointTarget[Any]]) -> Entrypoint[ImplementSide[P1, Callable]]: ...
+    def static(cls, func: Callable[P1, CollectEndpointTarget[Any]]) -> Feature[ImplementSide[P1, Callable]]: ...
     @classmethod
-    def static(cls, func) -> Entrypoint[ImplementSide]:
+    def static(cls, func) -> Feature[ImplementSide]:
         return cls(ImplementSide(func))  # type: ignore
 
     @overload
     @classmethod
     def method(
         cls, func: Callable[P1, CollectEndpointTarget[Callable[P2, R]]]
-    ) -> Entrypoint[BoundImplementSide[P1, Callable[P2, R]]]: ...
+    ) -> Feature[BoundImplementSide[P1, Callable[P2, R]]]: ...
     @overload
     @classmethod
-    def method(cls, func: Callable[P1, CollectEndpointTarget[Any]]) -> Entrypoint[BoundImplementSide[P1, Callable]]: ...
+    def method(cls, func: Callable[P1, CollectEndpointTarget[Any]]) -> Feature[BoundImplementSide[P1, Callable]]: ...
     @classmethod
-    def method(cls, func) -> Entrypoint[BoundImplementSide]:
+    def method(cls, func) -> Feature[BoundImplementSide]:
         return cls(BoundImplementSide(func))  # type: ignore
 
     @property
@@ -100,13 +100,13 @@ class Entrypoint(Generic[ImplementSideT]):
         return EntrypointRecordLabel(self)
 
     @overload
-    def select(self: Entrypoint[ImplementSide[..., C]], *, expect_complete: bool = True) -> Candidates[C]: ...
+    def select(self: Feature[ImplementSide[..., C]], *, expect_complete: bool = True) -> Candidates[C]: ...
     @overload
-    def select(self: Entrypoint[BoundImplementSide[..., C]], *, expect_complete: bool = True) -> Candidates[C]: ...
+    def select(self: Feature[BoundImplementSide[..., C]], *, expect_complete: bool = True) -> Candidates[C]: ...
     def select(self, *, expect_complete: bool = True) -> Candidates:
         return Candidates(self, expect_complete)
 
-    def impl(self: Entrypoint[ImplementSide[P1, C]], *args: P1.args, **kwargs: P1.kwargs):
+    def impl(self: Feature[ImplementSide[P1, C]], *args: P1.args, **kwargs: P1.kwargs):
         return self.implement_side.impl(self, *args, **kwargs)
 
     def _call(self, call_side: CallSideT) -> CallableEntrypoint[ImplementSideT, CallSideT]:
@@ -130,7 +130,7 @@ class Entrypoint(Generic[ImplementSideT]):
 
 
 @dataclass(init=False, eq=True, unsafe_hash=True)
-class CallableEntrypoint(Generic[ImplementSideT, CallSideT], Entrypoint[ImplementSideT]):
+class CallableEntrypoint(Generic[ImplementSideT, CallSideT], Feature[ImplementSideT]):
     call_side: CallSideT
 
     def __init__(self, implement_side: ImplementSideT, call_side: CallSideT):
@@ -156,7 +156,7 @@ class CallableEntrypoint(Generic[ImplementSideT, CallSideT], Entrypoint[Implemen
 
 
 @dataclass(init=False, eq=True, unsafe_hash=True)
-class BoundEntrypoint(Generic[ImplementSideT, T], Entrypoint[ImplementSideT]):
+class BoundEntrypoint(Generic[ImplementSideT, T], Feature[ImplementSideT]):
     instance: T = field(hash=False)
     owner: type = field(hash=False)
 
@@ -207,7 +207,7 @@ class BoundCallableEntrypoint(
         return self.call_side.callee(*args, **kwargs)
 
 
-def entrypoint_collect(target: Literal["local", "global"] | CollectContext = "local"):
+def feature_collect(target: Literal["local", "global"] | CollectContext = "local"):
     if target == "local":
         context = COLLECTING_CONTEXT_VAR.get()
     elif target == "global":

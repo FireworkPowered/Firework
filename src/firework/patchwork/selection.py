@@ -8,14 +8,14 @@ from .globals import LOOKUP_DEPTH, iter_layout
 from .typing import C, P, R
 
 if TYPE_CHECKING:
-    from .entrypoint import Entrypoint
+    from .feature import Feature
     from .overload import OverloadSpec, TCallValue
-    from .record import EntrypointRecord
+    from .record import FeatureRecord
 
 
 @dataclass
 class Candidates(Generic[C]):
-    endpoint: Entrypoint
+    endpoint: Feature
     expect_complete: bool = False
 
     def __iter__(self) -> Iterator[Selection[C]]:
@@ -36,8 +36,8 @@ class Candidates(Generic[C]):
 
 @dataclass
 class Selection(Generic[C]):
-    record: EntrypointRecord
-    endpoint: Entrypoint
+    record: FeatureRecord
+    endpoint: Feature
     result: dict[C, None] | None = None
     completed: bool = False
 

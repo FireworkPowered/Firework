@@ -1,10 +1,10 @@
 from .anycast import Anycast as Anycast
 from .context import CollectContext as CollectContext
-from .entrypoint import Entrypoint as Entrypoint
-from .entrypoint import entrypoint_collect as entrypoint_collect
+from .feature import Feature as Feature
+from .feature import feature_collect as feature_collect
 from .overload import SINGLETON_OVERLOAD as SINGLETON_OVERLOAD
 from .overload import OverloadSpec as OverloadSpec
 from .overload import SimpleOverload as SimpleOverload
 from .overload import SingletonOverload as SingletonOverload
 from .overload import TypeOverload as TypeOverload
-from .record import EntrypointRecord as EntrypointRecord
+from .record import FeatureRecord as FeatureRecord

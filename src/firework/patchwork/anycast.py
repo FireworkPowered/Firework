@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Callable, Generic
 
-from .entrypoint import Entrypoint
+from .feature import Feature
 from .overload import SimpleOverload
 from .typing import CR, P, R
 
@@ -10,11 +10,11 @@ ANYCAST_OVERLOAD = SimpleOverload("flywheel.userspace.anycast")
 
 
 class Anycast(Generic[CR]):
-    endpoint: Entrypoint
+    endpoint: Feature
     prototype: CR
 
     def __init__(self, prototype: CR):
-        self.endpoint = Entrypoint.static(self._prototype_collect)
+        self.endpoint = Feature.static(self._prototype_collect)
         self.prototype = prototype
 
     @staticmethod

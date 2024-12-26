@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 from .context import CollectContext
 
 if TYPE_CHECKING:
-    from .entrypoint import Entrypoint
+    from .feature import Feature
     from .implement import EntrypointImplement
-    from .record import EntrypointRecord
+    from .record import FeatureRecord
     from .typing import TEntity
 
 
@@ -17,15 +17,15 @@ GLOBAL_COLLECT_CONTEXT = CollectContext()
 COLLECTING_CONTEXT_VAR = ContextVar("CollectingContext", default=GLOBAL_COLLECT_CONTEXT)
 
 COLLECTING_IMPLEMENT_ENTITY: ContextVar[EntrypointImplement] = ContextVar("CollectingImplementEntity")
-COLLECTING_TARGET_RECORD: ContextVar[EntrypointRecord] = ContextVar("CollectingTargetRecord")
+COLLECTING_TARGET_RECORD: ContextVar[FeatureRecord] = ContextVar("CollectingTargetRecord")
 
 LOOKUP_LAYOUT_VAR = ContextVar["tuple[CollectContext, ...]"]("LookupContext", default=(GLOBAL_COLLECT_CONTEXT,))
 
 GLOBAL_LOOKUP_DEPTH = {}
-LOOKUP_DEPTH: ContextVar[dict[Entrypoint, int]] = ContextVar("CallerTokens", default=GLOBAL_LOOKUP_DEPTH)
+LOOKUP_DEPTH: ContextVar[dict[Feature, int]] = ContextVar("CallerTokens", default=GLOBAL_LOOKUP_DEPTH)
 
 
-def iter_layout(endpoint: Entrypoint):
+def iter_layout(endpoint: Feature):
     index = LOOKUP_DEPTH.get().get(endpoint, -1)
     contexts = LOOKUP_LAYOUT_VAR.get()
 

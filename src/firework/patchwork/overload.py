@@ -5,7 +5,7 @@ from typing import Any, Callable, Generic, TypeVar
 
 from typing_extensions import final
 
-from .record import CollectSignal, EntrypointRecord
+from .record import CollectSignal, FeatureRecord
 
 TOverload = TypeVar("TOverload", bound="OverloadSpec", covariant=True)
 TCallValue = TypeVar("TCallValue")
@@ -22,7 +22,7 @@ class OverloadSpec(Generic[TSignature, TCollectValue, TCallValue]):
         return CollectSignal(self, value)
 
     @final
-    def dig(self, record: EntrypointRecord, call_value: TCallValue, *, name: str | None = None) -> dict[Callable, None]:
+    def dig(self, record: FeatureRecord, call_value: TCallValue, *, name: str | None = None) -> dict[Callable, None]:
         name = name or self.name
         if name not in record.scopes:
             raise NotImplementedError("cannot lookup any implementation with given arguments")
@@ -30,7 +30,7 @@ class OverloadSpec(Generic[TSignature, TCollectValue, TCallValue]):
         return self.harvest(record.scopes[name], call_value)
 
     @final
-    def lay(self, record: EntrypointRecord, collect_value: TCollectValue, implement: Callable, *, name: str | None = None):
+    def lay(self, record: FeatureRecord, collect_value: TCollectValue, implement: Callable, *, name: str | None = None):
         name = name or self.name
         if name not in record.scopes:
             record.scopes[name] = {}

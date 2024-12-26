@@ -6,22 +6,22 @@ from firework.util import cvar
 
 from .entity import BaseEntity
 from .globals import COLLECTING_IMPLEMENT_ENTITY, COLLECTING_TARGET_RECORD
-from .record import EntrypointRecord
+from .record import FeatureRecord
 
 if TYPE_CHECKING:
     from .context import CollectContext
-    from .entrypoint import CollectEndpointTarget, Entrypoint
+    from .feature import CollectEndpointTarget, Feature
 
 
 class EntrypointImplement(BaseEntity):
-    targets: list[tuple[Entrypoint, CollectEndpointTarget]]
+    targets: list[tuple[Feature, CollectEndpointTarget]]
     impl: Callable
 
     def __init__(self, impl: Callable):
         self.targets = []
         self.impl = impl
 
-    def add_target(self, endpoint: Entrypoint, generator: CollectEndpointTarget):
+    def add_target(self, endpoint: Feature, generator: CollectEndpointTarget):
         self.targets.append((endpoint, generator))
 
     def collect(self, collector: CollectContext):
@@ -34,7 +34,7 @@ class EntrypointImplement(BaseEntity):
                 if record_signature in collector.fn_implements:
                     record = collector.fn_implements[record_signature]
                 else:
-                    record = collector.fn_implements[record_signature] = EntrypointRecord()
+                    record = collector.fn_implements[record_signature] = FeatureRecord()
 
                 with cvar(COLLECTING_TARGET_RECORD, record):
                     for signal in generator:

@@ -161,3 +161,4 @@ build-backend = "pdm.backend"
 [tool.pyright]
 reportRedeclaration = false
 reportIncompatibleMethodOverride = false
+reportImplicitStringConcatenation = true
