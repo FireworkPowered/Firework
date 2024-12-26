@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(eq=True, frozen=True)
-class EntrypointRecordLabel:
+class FeatureEndpointLabel:
     endpoint: Feature
 
 

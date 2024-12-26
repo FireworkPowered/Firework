@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .feature import CollectEndpointTarget, Feature
 
 
-class EntrypointImplement(BaseEntity):
+class FeatureImpl(BaseEntity):
     targets: list[tuple[Feature, CollectEndpointTarget]]
     impl: Callable
 

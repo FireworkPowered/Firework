@@ -4,8 +4,8 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Callable, Concatenate, Generator, Generic, Literal, Self, TypeVar, overload
 
 from .globals import COLLECTING_CONTEXT_VAR, GLOBAL_COLLECT_CONTEXT
-from .implement import EntrypointImplement
-from .record import CollectSignal, EntrypointRecordLabel
+from .implement import FeatureImpl
+from .record import CollectSignal, FeatureEndpointLabel
 from .selection import Candidates
 from .typing import CQ, P1, P2, C, P, R, T
 
@@ -15,11 +15,11 @@ if TYPE_CHECKING:
 CollectEndpointTarget = Generator[CollectSignal, None, T]
 
 
-def _ensure_entity(func: Callable) -> EntrypointImplement:
+def _ensure_entity(func: Callable) -> FeatureImpl:
     if hasattr(func, "__flywheel_implement_entity__"):
-        entity: EntrypointImplement = func.__flywheel_implement_entity__  # type: ignore[reportFunctionMemberAccess]
+        entity: FeatureImpl = func.__flywheel_implement_entity__  # type: ignore[reportFunctionMemberAccess]
     else:
-        entity = EntrypointImplement(func)
+        entity = FeatureImpl(func)
         func.__flywheel_implement_entity__ = entity  # type: ignore[reportFunctionMemberAccess]
 
     return entity
@@ -45,7 +45,7 @@ class ImplementSide(Generic[P, CQ]):
 
 
 class BoundImplementSide(ImplementSide[P, CQ]):
-    def impl(self: BoundImplementSide[Concatenate[T, P], C], entrypoint: BoundEntrypoint[Any, T], *args: P.args, **kwargs: P.kwargs):
+    def impl(self: BoundImplementSide[Concatenate[T, P], C], entrypoint: BoundedFeature[Any, T], *args: P.args, **kwargs: P.kwargs):
         def wrapper(callee: C) -> C:
             entity = _ensure_entity(callee)
             entity.add_target(entrypoint, self.collector(entrypoint.instance, *args, **kwargs))
@@ -97,7 +97,7 @@ class Feature(Generic[ImplementSideT]):
 
     @property
     def signature(self):
-        return EntrypointRecordLabel(self)
+        return FeatureEndpointLabel(self)
 
     @overload
     def select(self: Feature[ImplementSide[..., C]], *, expect_complete: bool = True) -> Candidates[C]: ...
@@ -109,28 +109,28 @@ class Feature(Generic[ImplementSideT]):
     def impl(self: Feature[ImplementSide[P1, C]], *args: P1.args, **kwargs: P1.kwargs):
         return self.implement_side.impl(self, *args, **kwargs)
 
-    def _call(self, call_side: CallSideT) -> CallableEntrypoint[ImplementSideT, CallSideT]:
-        return CallableEntrypoint(self.implement_side, call_side)
+    def _call(self, call_side: CallSideT) -> CallableFeature[ImplementSideT, CallSideT]:
+        return CallableFeature(self.implement_side, call_side)
 
-    def call_static(self, func: C) -> CallableEntrypoint[ImplementSideT, CallSide[C]]:
+    def call_static(self, func: C) -> CallableFeature[ImplementSideT, CallSide[C]]:
         return self._call(CallSide(func))
 
-    def call_method(self, func: C) -> CallableEntrypoint[ImplementSideT, BoundCallSide[C]]:
+    def call_method(self, func: C) -> CallableFeature[ImplementSideT, BoundCallSide[C]]:
         return self._call(BoundCallSide(func))
 
     @overload
     def __get__(self, instance: None, owner: Any = None, /) -> Self: ...
     @overload
-    def __get__(self, instance: T, owner: Any = None, /) -> BoundEntrypoint[ImplementSideT, T]: ...
+    def __get__(self, instance: T, owner: Any = None, /) -> BoundedFeature[ImplementSideT, T]: ...
     def __get__(self, instance: Any, owner: Any = None, /):
         if instance is None:
             return self
 
-        return BoundEntrypoint(self.implement_side, instance, owner)
+        return BoundedFeature(self.implement_side, instance, owner)
 
 
 @dataclass(init=False, eq=True, unsafe_hash=True)
-class CallableEntrypoint(Generic[ImplementSideT, CallSideT], Feature[ImplementSideT]):
+class CallableFeature(Generic[ImplementSideT, CallSideT], Feature[ImplementSideT]):
     call_side: CallSideT
 
     def __init__(self, implement_side: ImplementSideT, call_side: CallSideT):
@@ -140,23 +140,23 @@ class CallableEntrypoint(Generic[ImplementSideT, CallSideT], Feature[ImplementSi
     @overload
     def __get__(self, instance: None, owner: Any = None, /) -> Self: ...
     @overload
-    def __get__(self, instance: T, owner: Any = None, /) -> BoundCallableEntrypoint[ImplementSideT, CallSideT, T]: ...
+    def __get__(self, instance: T, owner: Any = None, /) -> BoundedCallableFeature[ImplementSideT, CallSideT, T]: ...
     def __get__(self, instance: Any, owner: Any = None, /):
         if instance is None:
             return self
 
-        return BoundCallableEntrypoint(self.implement_side, self.call_side, instance, owner)
+        return BoundedCallableFeature(self.implement_side, self.call_side, instance, owner)
 
     @overload
-    def __call__(self: CallableEntrypoint[Any, BoundCallSide[Callable[P, R]]], *args: P.args, **kwargs: P.kwargs) -> R: ...
+    def __call__(self: CallableFeature[Any, BoundCallSide[Callable[P, R]]], *args: P.args, **kwargs: P.kwargs) -> R: ...
     @overload
-    def __call__(self: CallableEntrypoint[Any, CallSide[Callable[P, R]]], *args: P.args, **kwargs: P.kwargs) -> R: ...
+    def __call__(self: CallableFeature[Any, CallSide[Callable[P, R]]], *args: P.args, **kwargs: P.kwargs) -> R: ...
     def __call__(self, *args, **kwargs):
         return self.call_side.callee(*args, **kwargs)
 
 
 @dataclass(init=False, eq=True, unsafe_hash=True)
-class BoundEntrypoint(Generic[ImplementSideT, T], Feature[ImplementSideT]):
+class BoundedFeature(Generic[ImplementSideT, T], Feature[ImplementSideT]):
     instance: T = field(hash=False)
     owner: type = field(hash=False)
 
@@ -172,19 +172,19 @@ class BoundEntrypoint(Generic[ImplementSideT, T], Feature[ImplementSideT]):
 
     @overload
     def impl(
-        self: BoundEntrypoint[BoundImplementSide[Concatenate[T, P1], C], T], *args: P1.args, **kwargs: P1.kwargs
+        self: BoundedFeature[BoundImplementSide[Concatenate[T, P1], C], T], *args: P1.args, **kwargs: P1.kwargs
     ) -> Callable[[C], C]: ...
     @overload
-    def impl(self: BoundEntrypoint[ImplementSide[P1, C], Any], *args: P1.args, **kwargs: P1.kwargs) -> Callable[[C], C]: ...
+    def impl(self: BoundedFeature[ImplementSide[P1, C], Any], *args: P1.args, **kwargs: P1.kwargs) -> Callable[[C], C]: ...
     def impl(self, *args, **kwargs) -> Callable[[C], C]:
         return self.implement_side.impl(self, *args, **kwargs)
 
 
 @dataclass(init=False, eq=True, unsafe_hash=True)
-class BoundCallableEntrypoint(
+class BoundedCallableFeature(
     Generic[ImplementSideT, CallSideT, T],
-    CallableEntrypoint[ImplementSideT, CallSideT],
-    BoundEntrypoint[ImplementSideT, T],
+    CallableFeature[ImplementSideT, CallSideT],
+    BoundedFeature[ImplementSideT, T],
 ):
     instance: T = field(hash=False)
     owner: type = field(hash=False)
@@ -196,10 +196,10 @@ class BoundCallableEntrypoint(
 
     @overload
     def __call__(
-        self: BoundCallableEntrypoint[Any, BoundCallSide[Callable[Concatenate[T, P], R]], T], *args: P.args, **kwargs: P.kwargs
+        self: BoundedCallableFeature[Any, BoundCallSide[Callable[Concatenate[T, P], R]], T], *args: P.args, **kwargs: P.kwargs
     ) -> R: ...
     @overload
-    def __call__(self: BoundCallableEntrypoint[Any, CallSide[Callable[P, R]], Any], *args: P.args, **kwargs: P.kwargs) -> R: ...
+    def __call__(self: BoundedCallableFeature[Any, CallSide[Callable[P, R]], Any], *args: P.args, **kwargs: P.kwargs) -> R: ...
     def __call__(self, *args, **kwargs):
         if isinstance(self.call_side, BoundCallSide):
             return self.call_side.callee(self.instance, *args, **kwargs)
@@ -218,7 +218,7 @@ def feature_collect(target: Literal["local", "global"] | CollectContext = "local
     def wrapper(func: C) -> C:
         # entity = _ensure_entity(func
         if not hasattr(func, "__flywheel_implement_entity__"):
-            raise RuntimeError("[@]entrypoint_collect must be used with [@]entrypoint.impl")
+            raise RuntimeError("[@]feature_collect must be used with [@]feature.impl")
 
         entity = func.__flywheel_implement_entity__  # type: ignore
         context.collect(entity)

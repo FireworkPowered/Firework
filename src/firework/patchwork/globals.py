@@ -8,7 +8,7 @@ from .context import CollectContext
 
 if TYPE_CHECKING:
     from .feature import Feature
-    from .implement import EntrypointImplement
+    from .implement import FeatureImpl
     from .record import FeatureRecord
     from .typing import TEntity
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 GLOBAL_COLLECT_CONTEXT = CollectContext()
 COLLECTING_CONTEXT_VAR = ContextVar("CollectingContext", default=GLOBAL_COLLECT_CONTEXT)
 
-COLLECTING_IMPLEMENT_ENTITY: ContextVar[EntrypointImplement] = ContextVar("CollectingImplementEntity")
+COLLECTING_IMPLEMENT_ENTITY: ContextVar[FeatureImpl] = ContextVar("CollectingImplementEntity")
 COLLECTING_TARGET_RECORD: ContextVar[FeatureRecord] = ContextVar("CollectingTargetRecord")
 
 LOOKUP_LAYOUT_VAR = ContextVar["tuple[CollectContext, ...]"]("LookupContext", default=(GLOBAL_COLLECT_CONTEXT,))
