@@ -25,6 +25,9 @@ license = {text = "MIT"}
 [project.optional-dependencies]
 uvicorn = ["uvicorn>=0.32.0"]
 aiohttp = ["aiohttp>=3.10.10"]
+scheduler = [
+    "croniter>=5.0.1",
+]
 
 [project.scripts]
 firework = "firework.cli.core:main"
