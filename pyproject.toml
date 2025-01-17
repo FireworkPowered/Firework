@@ -17,6 +17,7 @@ dependencies = [
     "jsonschema>=4.23.0",
     "dacite>=1.8.1",
     "prompt-toolkit>=3.0.48",
+    "devtools>=0.12.2",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
@@ -44,7 +45,7 @@ basic = "firework.cli.recipes.basic:main"
 
 [dependency-groups]
 dev = [
-    "ruff>=0.7.2",
+    "ruff>=0.9.1",
     "pytest>=8.3.3",
     "typer>=0.13.0",
     "git-filter-repo>=2.45.0",
