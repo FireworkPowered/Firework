@@ -26,6 +26,10 @@ async def any_completed(tasks: Iterable[_CoroutineLike]):
     return next(iter(done)), pending
 
 
+async def oneof(*tasks: _CoroutineLike):
+    return await any_completed(tasks)
+
+
 def cancel_alive_tasks(loop: asyncio.AbstractEventLoop):
     to_cancel = asyncio.tasks.all_tasks(loop)
     if to_cancel:
