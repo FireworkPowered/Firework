@@ -4,25 +4,17 @@ import asyncio
 import signal
 from typing import TYPE_CHECKING, Any, Iterable
 
-from exceptiongroup import BaseExceptionGroup  # noqa: A004
+from exceptiongroup import ExceptionGroup  # noqa: A004
 from loguru import logger
 
 from firework.globals import BOOTSTRAP_CONTEXT
-from firework.util import TaskGroup, any_completed, cvar, unity
+from firework.util import TaskGroup, cvar, oneof
 
-from ._resolve import resolve_dependencies, validate_services_removal
 from .context import ServiceContext
-from .status import Phase, Stage
+from .graph import ServiceGraph
 
 if TYPE_CHECKING:
     from .service import Service
-
-
-def _dummy_online():
-    async def _dummy_offline(*, trigger_exit: bool = True):
-        pass
-
-    return _dummy_offline
 
 
 def _cancel_alive_tasks(loop: asyncio.AbstractEventLoop):
@@ -45,200 +37,146 @@ class UnhandledExit(Exception):
 
 
 class Bootstrap:
-    initial_services: dict[str, Service]
-    services: dict[str, Service]
-    contexts: dict[str, ServiceContext]
-    daemon_tasks: dict[str, asyncio.Task]
-    task_group: TaskGroup
+    graph: ServiceGraph
 
-    def __init__(self) -> None:
-        self.initial_services = {}
-        self.services = {}
-        self.contexts = {}
-        self.daemon_tasks = {}
-        self.task_group = TaskGroup()
+    def __init__(self):
+        self.graph = ServiceGraph()
 
-    @staticmethod
-    def current():
-        return BOOTSTRAP_CONTEXT.get()
+    async def spawn(self, *services: Service):
+        service_bind, previous, nexts = self.graph.subgraph(*services)
+        tasks: dict[str, asyncio.Task] = self.graph.tasks
 
-    @property
-    def running(self):
-        return self.task_group.main is not None and not self.task_group.main.done()
+        prepare_errors: list[Exception] = []
+        cleanup_errors: list[Exception] = []
 
-    def get_service(self, service_or_id: type[Service] | str) -> Service:
-        if isinstance(service_or_id, type):
-            service_or_id = service_or_id.id
+        done_prepare: dict[str, None] = {}
+        pending_prepare = TaskGroup()
+        pending_cleanup = TaskGroup()
+        queued_prepare = {k: v.copy() for k, v in previous.maps[0].items()}
+        queued_cleanup = {k: v.copy() for k, v in nexts.maps[0].items()}
 
-        return self.services[service_or_id]
+        spawn_forward_prepare: bool = True
 
-    def get_context(self, service_or_id: type[Service] | str) -> ServiceContext:
-        if isinstance(service_or_id, type):
-            service_or_id = service_or_id.id
+        def spawn_prepare(service: Service):
+            async def prepare_guard():
+                context = ServiceContext(self)
+                self.graph.contexts[service.id] = context
+                task = tasks[service.id] = asyncio.create_task(service.launch(context))
 
-        return self.contexts[service_or_id]
+                await oneof(context.wait_prepare_pre(), task)
+                await oneof(context.wait_prepare_post(), task)
 
-    def add_initial_services(self, *services: Service):
-        for service in services:
-            self.initial_services[service.id] = service
+                if task.done():
+                    nonlocal spawn_forward_prepare
+                    spawn_forward_prepare = False
 
-    def remove_initial_services(self, *services: type[Service]):
-        for service in services:
-            self.initial_services.pop(service.id)
+                    prepare_errors.append(task.exception() or UnhandledExit())  # type: ignore
+                    self.graph.drop(service)
+                    return
 
-    async def start_lifespan(
-        self, services: Iterable[Service], *, rollback: bool = False, failed_record: list[asyncio.Task] | None = None
-    ):
-        failed = await self._handle_stage_prepare(services)
+                done_prepare[service.id] = None
 
-        if failed_record is not None and failed is not None:
-            done, curr = failed
+                if not spawn_forward_prepare:
+                    return
 
-            failed_record.extend([i for i in curr if i.done()])
+                for next_service, barriers in list(queued_prepare.items()):
+                    if service.id in barriers:
+                        barriers.pop(service.id)
 
-            if rollback:
-                self.task_group.drop(done)
+                        if not barriers:
+                            spawn_prepare(service_bind[next_service])
+                            queued_prepare.pop(next_service)
 
-                for i in done:
-                    self.contexts[i.get_name()].dispatch_online()
+            pending_prepare.spawn(prepare_guard())
 
-                for i in curr:
-                    if not i.done():
-                        self.contexts[i.get_name()].dispatch_online()
+        def spawn_cleanup(service: Service):
+            async def cleanup_guard():
+                context = self.graph.contexts[service.id]
+                task = tasks[service.id]
 
-                await self._handle_stage_cleanup(
-                    [self.services[i.get_name()] for i in done] + [self.services[i.get_name()] for i in curr if not i.done()]
-                )
+                context.exit()
+                await oneof(context.wait_cleanup_pre(), task)
+                await oneof(context.wait_cleanup_post(), task)
 
-            return _dummy_online
+                self.graph.drop(service)
 
-        def _online():
-            for service in services:
-                self.contexts[service.id].dispatch_online()
+                if task.done():
+                    cleanup_errors.append(task.exception() or UnhandledExit())  # type: ignore
+                    return
 
-            async def _offline(*, trigger_exit: bool = True):
-                failed_offline = await self._handle_stage_cleanup(services, trigger_exit=trigger_exit)
+                for previous_service, barriers in list(queued_cleanup.items()):
+                    if service.id in barriers:
+                        barriers.pop(service.id)
 
-                if failed_record is not None and failed_offline is not None:
-                    failed_record.extend(failed_offline)
+                        if not barriers:
+                            spawn_cleanup(service_bind[previous_service])
+                            queued_cleanup.pop(previous_service)
 
-            return _offline
+            pending_cleanup.spawn(cleanup_guard())
 
-        return _online
+        def toggle_enter():
+            for i in done_prepare:
+                self.graph.contexts[i].enter()
 
-    async def _service_daemon(self, service: Service, context: ServiceContext):
-        await service.launch(context)
-        context.exit_complete()
+        def toggle_skip():
+            for i in done_prepare:
+                self.graph.contexts[i].skip()
 
-    async def _handle_stage_prepare(self, services: Iterable[Service]):
-        bind = {service.id: service for service in services}
-        resolved = resolve_dependencies(services, exclude=self.services.values())
-        previous_tasks: list[asyncio.Task] = []
+        def rollback():
+            spawned = False
 
-        for layer in resolved:
-            _services = {i: bind[i] for i in layer}
-            _contexts = {i: ServiceContext(self) for i in layer}
-            _daemons = {i: self._service_daemon(_services[i], _contexts[i]) for i in layer}
+            for i in done_prepare:
+                if not (nexts[i] & done_prepare.keys()):
+                    spawned = True
+                    spawn_cleanup(service_bind[i])
 
-            self.services.update(_services)
-            self.contexts.update(_contexts)
+            if not spawned:
+                raise RuntimeError("Unsatisfied dependencies, rollback failed")
 
-            daemon_tasks = {k: asyncio.create_task(v, name=k) for k, v in _daemons.items()}
-            self.daemon_tasks.update(daemon_tasks)
+            return pending_cleanup.wait()
 
-            awaiting_daemon_exit = asyncio.create_task(any_completed(daemon_tasks.values()))
-            awaiting_dispatch_ready = asyncio.create_task(
-                unity([i.wait_for(Stage.PREPARE, Phase.WAITING) for i in _contexts.values()])
-            )  # awaiting_prepare
-            completed_task, _ = await any_completed([awaiting_daemon_exit, awaiting_dispatch_ready])
+        for i, v in previous.maps[0].items():
+            if not v:
+                spawn_prepare(service_bind[i])
+                queued_prepare.pop(i)
 
-            if completed_task is awaiting_daemon_exit and not awaiting_dispatch_ready.done():
-                return previous_tasks, daemon_tasks.values()
+        await pending_prepare
 
-            for context in _contexts.values():
-                context.dispatch_prepare()
+        if queued_prepare:
+            toggle_skip()
+            await rollback()
 
-            awaiting_prepare = asyncio.create_task(
-                unity([i.wait_for(Stage.PREPARE, Phase.COMPLETED) for i in _contexts.values()]),  # awaiting_prepare
-            )
-            completed_task, _ = await any_completed([awaiting_prepare, awaiting_daemon_exit])
+            if cleanup_errors:
+                raise RuntimeError("Unsatisfied dependencies") from ExceptionGroup("", cleanup_errors)
 
-            if completed_task is awaiting_daemon_exit and not awaiting_prepare.done():
-                return previous_tasks, daemon_tasks.values()
+            raise RuntimeError("Unsatisfied dependencies")
 
-            layer_tasks = [asyncio.create_task(i.wait_for(Stage.ONLINE, Phase.COMPLETED)) for i in _contexts.values()]
-            self.task_group.update(layer_tasks)
-            previous_tasks.extend(layer_tasks)
+        if prepare_errors:
+            toggle_skip()
+            await rollback()
 
-    async def _handle_stage_cleanup(self, services: Iterable[Service], *, trigger_exit: bool = True):
-        service_bind = {}
-        for service in services:
-            if service.id not in self.services:
-                raise ValueError(f"Service {service.id} is not registered")
-            service_bind[service.id] = service
+            if cleanup_errors:
+                raise ExceptionGroup("", cleanup_errors) from ExceptionGroup("", prepare_errors)
 
-        daemon_bind = {service.id: self.daemon_tasks[service.id] for service in services}
+            raise ExceptionGroup("", prepare_errors)
 
-        validate_services_removal(self.services.values(), services)
-        resolved = resolve_dependencies(services, reverse=True, exclude=self.services.values())
+        self.graph.apply(dict(service_bind), previous, nexts)
+        toggle_enter()
 
-        for layer in resolved:
-            _contexts = {i: self.contexts[i] for i in layer}
-            daemon_tasks = [daemon_bind[i] for i in layer]
+        return rollback
 
-            if trigger_exit:
-                self._sigexit_trig([service_bind[i] for i in layer])
-
-            awaiting_daemon_exit = asyncio.create_task(any_completed(daemon_tasks))
-            awaiting_dispatch_ready = unity([i.wait_for(Stage.CLEANUP, Phase.WAITING) for i in _contexts.values()])  # awaiting_prepare
-            completed_task, _ = await any_completed([awaiting_daemon_exit, awaiting_dispatch_ready])
-
-            if completed_task is awaiting_daemon_exit:
-                return [task for task in daemon_tasks if task.done()]
-
-            for context in _contexts.values():
-                context.dispatch_cleanup()
-
-            awaiting_cleanup = asyncio.create_task(
-                unity([i.wait_for(Stage.CLEANUP, Phase.COMPLETED) for i in _contexts.values()]),  # awaiting_prepare
-            )
-            completed_task, _ = await any_completed([awaiting_cleanup, awaiting_daemon_exit])
-            await any_completed([awaiting_cleanup, awaiting_daemon_exit])  # update asyncio.Task state
-
-            if completed_task is awaiting_daemon_exit and not awaiting_cleanup.done():
-                return [task for task in daemon_tasks if task.done()]
-
-            await asyncio.gather(*[i.wait_for(Stage.EXIT, Phase.COMPLETED) for i in _contexts.values()])
-
-            for target in layer:
-                self.services.pop(target)
-                self.contexts.pop(target)
-                self.daemon_tasks.pop(target)
-
-    async def launch(self):
-        if not self.initial_services:
-            raise ValueError("No services to launch.")
-
-        with cvar(BOOTSTRAP_CONTEXT, self):
-            failed = []
-
-            online_dispatch = await self.start_lifespan(self.initial_services.values(), failed_record=failed, rollback=True)
-            offline_callback = online_dispatch()
-
-            try:
-                if not failed:
-                    logger.success("Service startup complete, Ctrl-C to exit application.", style="green bold")
-                    await self.task_group.wait()
-            finally:
-                await offline_callback(trigger_exit=False)
-
-                if failed:
-                    exceptions = [i.exception() or UnhandledExit() for i in failed]
-                    raise BaseExceptionGroup("service cleanup failed", exceptions)
+    async def launch(self, *services: Service):
+        rollback = await self.spawn(*services)
+        try:
+            await asyncio.gather(*[self.graph.contexts[i.id]._switch.wait() for i in services])
+        except asyncio.CancelledError:
+            pass
+        finally:
+            await rollback()
 
     def launch_blocking(
         self,
-        *,
+        *services: Service,
         loop: asyncio.AbstractEventLoop | None = None,
         stop_signal: Iterable[signal.Signals] = (signal.SIGINT,),
     ):
@@ -249,11 +187,20 @@ class Bootstrap:
 
         logger.info("Starting launart main task...", style="green bold")
 
-        launch_task = loop.create_task(self.launch(), name="amnesia-launch")
+        with cvar(BOOTSTRAP_CONTEXT, self):
+            launch_task = loop.create_task(self.launch(*services), name="amnesia-launch")
+
         handled_signals: dict[signal.Signals, Any] = {}
 
-        def signal_handler(*_):
-            return self._on_sys_signal(launch_task)
+        def signal_handler(*args, **kwargs):  # noqa: ARG001
+            for service in self.graph.services:
+                self.graph.contexts[service].exit()
+
+            if not launch_task.done():
+                launch_task.cancel()
+                # wakeup loop if it is blocked by select() with long timeout
+                launch_task.get_loop().call_soon_threadsafe(lambda: None)
+                logger.warning("Ctrl-C triggered by user.", style="dark_orange bold")
 
         if threading.current_thread() is threading.main_thread():  # pragma: worst case
             try:
@@ -280,21 +227,3 @@ class Bootstrap:
         finally:
             asyncio.set_event_loop(None)
             logger.success("asyncio shutdown complete.", style="green bold")
-
-    def _sigexit_trig(self, services: Iterable[Service]):
-        for service in services:
-            self.contexts[service.id].exit()
-
-    def _on_sys_signal(self, launch_task: asyncio.Task):
-        self._sigexit_trig(self.services.values())
-
-        if self.task_group is not None:
-            self.task_group.stop()
-            if self.task_group.main is not None:  # pragma: worst case
-                self.task_group.main.cancel()
-
-        if not launch_task.done():
-            launch_task.cancel()
-            # wakeup loop if it is blocked by select() with long timeout
-            launch_task.get_loop().call_soon_threadsafe(lambda: None)
-            logger.warning("Ctrl-C triggered by user.", style="dark_orange bold")

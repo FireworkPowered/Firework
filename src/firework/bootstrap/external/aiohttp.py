@@ -27,8 +27,5 @@ class AiohttpClient(Service):
         async with context.prepare():
             self._session = self._session or ClientSession(timeout=ClientTimeout(total=10))
 
-        async with context.online():
-            pass
-
         async with context.cleanup():
             await self._session.close()

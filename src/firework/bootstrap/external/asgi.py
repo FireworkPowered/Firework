@@ -157,14 +157,23 @@ class UvicornASGIService(Service):
             logger.info(f"Uvicorn service listen at http://{config.host}:{config.port}")
             logger.info("\n".join(["Exposed endpoints:", *(f"  - {i}" for i in self.middleware.mounts)]))
 
-        async with context.online():
-            # create uvicorn serve task
+        # create uvicorn serve task
+
+        if context.ready:
             serve_task = asyncio.create_task(self.server.serve())
             await any_completed([serve_task, context.wait_for_sigexit()])
 
-        async with context.cleanup():
-            logger.warning("try to shutdown uvicorn server...")
-            self.server.should_exit = True
-            await any_completed([serve_task, asyncio.sleep(5)])
-            if not serve_task.done():
-                logger.warning("timeout, force exit uvicorn server...")
+            async with context.cleanup():
+                logger.warning("try to shutdown uvicorn server...")
+                self.server.should_exit = True
+
+                await any_completed([serve_task, asyncio.sleep(5)])
+                if not serve_task.done():
+                    logger.warning("timeout, attempt force exit uvicorn server...")
+                    self.server.force_exit = True
+                    await serve_task
+        else:
+            logger.warning("service is not ready, skip cleanup")
+
+            async with context.cleanup():
+                pass

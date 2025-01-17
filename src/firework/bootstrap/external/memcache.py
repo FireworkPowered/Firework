@@ -79,7 +79,7 @@ class MemcacheService(Service):
         async with context.prepare():
             pass
 
-        async with context.online():
+        if context.ready:
             while not context.should_exit:
                 while self.expire and self.expire[0][0] <= time():
                     _, key = heappop(self.expire)
