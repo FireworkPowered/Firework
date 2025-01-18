@@ -62,6 +62,7 @@ class Bootstrap:
                 context = ServiceContext(self)
                 self.graph.contexts[service.id] = context
                 task = tasks[service.id] = asyncio.create_task(service.launch(context))
+                context._switch.clear()
 
                 await oneof(context.wait_prepare_pre(), task)
                 await oneof(context.wait_prepare_post(), task)

@@ -28,6 +28,7 @@ class ServiceContext:
         self._ready: bool | None = None
         self._notify = asyncio.Event()
         self._switch = asyncio.Event()
+        self._switch.set()
         self._sigexit = asyncio.Event()
 
     def _update(self):
