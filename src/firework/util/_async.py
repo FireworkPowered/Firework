@@ -3,8 +3,6 @@ from __future__ import annotations
 import asyncio
 from typing import Coroutine, Iterable
 
-from loguru import logger
-
 _CoroutineLike = Coroutine | asyncio.Task
 
 
@@ -28,18 +26,3 @@ async def any_completed(tasks: Iterable[_CoroutineLike]):
 
 async def oneof(*tasks: _CoroutineLike):
     return await any_completed(tasks)
-
-
-def cancel_alive_tasks(loop: asyncio.AbstractEventLoop):
-    to_cancel = asyncio.tasks.all_tasks(loop)
-    if to_cancel:
-        for tsk in to_cancel:
-            tsk.cancel()
-        loop.run_until_complete(asyncio.gather(*to_cancel, return_exceptions=True))
-
-        for task in to_cancel:  # pragma: no cover
-            # BELIEVE IN PSF
-            if task.cancelled():
-                continue
-            if task.exception() is not None:
-                logger.opt(exception=task.exception()).error(f"Unhandled exception when shutting down {task}:")

@@ -1,5 +1,4 @@
 from ._async import any_completed as any_completed
-from ._async import cancel_alive_tasks as cancel_alive_tasks
 from ._async import into_tasks as into_tasks
 from ._async import oneof as oneof
 from ._async import unity as unity
