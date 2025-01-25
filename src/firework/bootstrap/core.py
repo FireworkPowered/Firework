@@ -80,13 +80,17 @@ class Bootstrap:
                 if not spawn_forward_prepare:
                     return
 
-                for next_service, barriers in list(queued_prepare.items()):
-                    if service.id in barriers:
-                        barriers.pop(service.id)
+                next_services = nexts[service.id]
+                for next_service in next_services:
+                    if next_service in done_prepare:
+                        continue
 
-                        if not barriers:
-                            spawn_prepare(service_bind[next_service])
-                            queued_prepare.pop(next_service)
+                    barriers = queued_prepare[next_service]
+                    barriers.pop(service.id)
+
+                    if not barriers:
+                        spawn_prepare(service_bind[next_service])
+                        queued_prepare.pop(next_service)
 
             pending_prepare.spawn(prepare_guard())
 
@@ -105,13 +109,18 @@ class Bootstrap:
                     cleanup_errors.append(task.exception() or UnhandledExit())  # type: ignore
                     return
 
-                for previous_service, barriers in list(queued_cleanup.items()):
-                    if service.id in barriers:
-                        barriers.pop(service.id)
+                previous_services = previous[service.id]
 
-                        if not barriers:
-                            spawn_cleanup(service_bind[previous_service])
-                            queued_cleanup.pop(previous_service)
+                for previous_service in previous_services:
+                    if previous_service in done_prepare:
+                        continue
+
+                    barriers = queued_cleanup[previous_service]
+                    barriers.pop(service.id)
+
+                    if not barriers:
+                        spawn_cleanup(service_bind[previous_service])
+                        queued_cleanup.pop(previous_service)
 
             pending_cleanup.spawn(cleanup_guard())
 
